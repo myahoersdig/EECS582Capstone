@@ -11,14 +11,12 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.splash_screen);
+        setContentView(R.layout.splash_screen); //this is located in res > layout > splashscreen
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                startActivity(new Intent(SplashActivity.this, Entry.class));
-                finish();
-            }
-        }, 2000);
+        new Handler().postDelayed(
+                () -> {
+                    startActivity(new Intent(SplashActivity.this, Entry.class));
+                    finish();
+                }, 2000); //shows it for 2 seconds and then starts the activity
     }
 }
