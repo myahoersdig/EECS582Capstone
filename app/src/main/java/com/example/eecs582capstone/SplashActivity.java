@@ -15,7 +15,7 @@ public class SplashActivity extends AppCompatActivity {
 
         new Handler().postDelayed(
                 () -> {
-                    startActivity(new Intent(SplashActivity.this, Entry.class));
+                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
                     finish();
                 }, 2000); //shows it for 2 seconds and then starts the activity
     }
