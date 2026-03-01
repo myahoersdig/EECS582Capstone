@@ -11,6 +11,7 @@ public class Entry extends Activity {
     static String TAG = "Look at this"; //you can add this to error catch statements to check in logcat
     EditText  edtEmailAddressLog, edtPasswordLog;
     Button btnLogin, btnRegisterLog;
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
