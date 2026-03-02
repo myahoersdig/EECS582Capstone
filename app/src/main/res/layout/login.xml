@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/editEmailAddressLog"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="Email Address"
+        android:inputType="textEmailAddress"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"/>
+
+    <EditText
+        android:id="@+id/edtPasswordLog"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="@id/editEmailAddressLog"
+        app:layout_constraintStart_toStartOf="@id/editEmailAddressLog"
+        app:layout_constraintTop_toBottomOf="@id/editEmailAddressLog"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/btnLoginLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        app:layout_constraintEnd_toEndOf="@id/edtPasswordLog"
+        app:layout_constraintStart_toStartOf="@id/edtPasswordLog"
+        app:layout_constraintTop_toBottomOf="@id/edtPasswordLog"
+        android:layout_marginTop="24dp"/>
+
+    <Button
+        android:id="@+id/btnRegisterLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Register"
+        app:layout_constraintEnd_toEndOf="@id/btnLoginLog"
+        app:layout_constraintStart_toStartOf="@id/btnLoginLog"
+        app:layout_constraintTop_toBottomOf="@id/btnLoginLog"
+        android:layout_marginTop="16dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
