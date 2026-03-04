@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class Entry extends Activity {
     static String TAG = "Look at this"; //you can add this to error catch statements to check in logcat
@@ -31,6 +32,31 @@ public class Entry extends Activity {
                 startActivity(i);
             }
         });
+        // NEW: Login button click
+        btnLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String email = edtEmailAddressLog.getText().toString().trim();
+                String password = edtPasswordLog.getText().toString().trim();
 
+                if (email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(Entry.this, "Please enter email and password", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                dbConnect dbHelper = new dbConnect(Entry.this);
+                boolean valid = dbHelper.checkUser(email, password);
+
+                if (valid) {
+                    Toast.makeText(Entry.this, "Login successful", Toast.LENGTH_SHORT).show();
+                    // TODO: Start your main activity here
+                    // Intent intent = new Intent(Entry.this, MainActivity.class);
+                    // startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(Entry.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

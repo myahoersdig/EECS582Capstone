@@ -2,6 +2,7 @@ package com.example.eecs582capstone;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -47,5 +48,15 @@ public class dbConnect extends SQLiteOpenHelper {
         values.put(COL_PASSWORD, user.getPassword());
         db.insert(TABLE_USERS, null, values);
         db.close();
+    }
+    public boolean checkUser(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TABLE_USERS +
+                " WHERE " + COL_EMAIL + " = ? AND " + COL_PASSWORD + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{email, password});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        db.close();
+        return exists;
     }
 }
