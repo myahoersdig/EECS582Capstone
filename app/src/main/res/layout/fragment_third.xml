@@ -1,19 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-fragment_third.xml by Mya Hoersdig
-Creates a display fragment page for the upload screen
--->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".ThirdFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/btnReadData"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/upload_fragment_text"
-        android:textSize="24sp"
-        android:layout_gravity="center"/>
+        android:text="Read Data" />
 
-</FrameLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/tvResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="Results will appear here..."
+            android:textSize="14sp" />
+    </ScrollView>
+
+</LinearLayout>
