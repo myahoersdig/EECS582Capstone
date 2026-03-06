@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+bottom_nav_menu.xml by Mya Hoersdig
+Sets the icons to the correct fragment and drawable that was uploaded
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/profile"
+        android:title="Profile"
+        android:icon="@drawable/person"/>
+    <item
+        android:id="@+id/home"
+        android:title="Home"
+        android:icon="@drawable/home"/>
+    <item
+        android:id="@+id/upload"
+        android:title="Upload"
+        android:icon="@drawable/upload"/>
+</menu>

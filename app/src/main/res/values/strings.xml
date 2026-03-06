@@ -6,4 +6,7 @@
     <string name="reenter_password">ReEnter Password</string>
     <string name="email_address">Email Address</string>
     <string name="regester">Regester</string>
+    <string name="home_fragment_text">Home</string>
+    <string name="profile_fragment_text">Profile</string>
+    <string name="upload_fragment_text">Upload</string>
 </resources>

@@ -59,4 +59,25 @@ public class dbConnect extends SQLiteOpenHelper {
         db.close();
         return exists;
     }
+
+    public Users getUserByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TABLE_USERS + " WHERE " + COL_EMAIL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{email});
+
+        Users user = null;
+        if (cursor.moveToFirst()) {
+            user = new Users(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COL_FIRSTNAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COL_LASTNAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COL_EMAIL)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(COL_PASSWORD))
+            );
+        }
+
+        cursor.close();
+        db.close();
+        return user;
+    }
 }

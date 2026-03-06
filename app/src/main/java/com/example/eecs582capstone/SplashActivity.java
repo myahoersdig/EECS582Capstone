@@ -1,3 +1,9 @@
+/*
+SplashAcitivy.java by Mya Hoersdig
+
+initiates the starting animation and then starts the registration page
+ */
+
 package com.example.eecs582capstone;
 
 import android.content.Intent;

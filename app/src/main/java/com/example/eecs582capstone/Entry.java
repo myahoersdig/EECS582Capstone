@@ -2,6 +2,7 @@ package com.example.eecs582capstone;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -10,7 +11,7 @@ import android.widget.Toast;
 
 public class Entry extends Activity {
     static String TAG = "Look at this"; //you can add this to error catch statements to check in logcat
-    EditText  edtEmailAddressLog, edtPasswordLog;
+    EditText edtEmailAddressLog, edtPasswordLog;
     Button btnLogin, btnRegisterLog;
 
     @Override
@@ -21,14 +22,14 @@ public class Entry extends Activity {
         edtEmailAddressLog = findViewById(R.id.editEmailAddressLog);
         edtPasswordLog = findViewById(R.id.edtPasswordLog);
         btnLogin = findViewById(R.id.btnLoginLog);
-        btnRegisterLog= findViewById(R.id.btnRegisterLog);
+        btnRegisterLog = findViewById(R.id.btnRegisterLog);
 
 
         btnRegisterLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                Intent i = new Intent(Entry.this,register.class);
+                Intent i = new Intent(Entry.this, register.class);
                 startActivity(i);
             }
         });
@@ -49,14 +50,27 @@ public class Entry extends Activity {
 
                 if (valid) {
                     Toast.makeText(Entry.this, "Login successful", Toast.LENGTH_SHORT).show();
-                    // TODO: Start your main activity here
-                    // Intent intent = new Intent(Entry.this, MainActivity.class);
-                    // startActivity(intent);
+
+                    SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("email", email); // this email will be used to query db in Profile
+                    editor.putBoolean("logged_in", true);
+                    editor.apply();
+
+                    Intent intent = new Intent(Entry.this, MainActivity.class);
+                    startActivity(intent);
                     finish();
                 } else {
                     Toast.makeText(Entry.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+        SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+        boolean loggedIn = prefs.getBoolean("logged_in", false);
+        if (loggedIn) {
+            Intent intent = new Intent(Entry.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 }
