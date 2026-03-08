@@ -76,22 +76,33 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateSessionUI() {
+        //get intake survey status
+        SharedPreferences prefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
+
         if (currentUserId == -1) {
             sessionStatus.setText("Please log in");
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
             return;
         }
-
-        boolean active = dbHelper.hasActiveSession(currentUserId);
-        if (active) {
-            sessionStatus.setText("Session in progress");
+        //if survey not completed, no session recording.
+        if (!prefs.getBoolean("completed", false)) {
+            sessionStatus.setText("Please complete the intake survey to unlock session recording.");
             btnStartSession.setEnabled(false);
-            btnEndSession.setEnabled(true);
-        } else {
-            sessionStatus.setText("No active session");
-            btnStartSession.setEnabled(true);
             btnEndSession.setEnabled(false);
+            return;
+        } else {
+            boolean active = dbHelper.hasActiveSession(currentUserId);
+            if (active) {
+                sessionStatus.setText("Session in progress");
+                btnStartSession.setEnabled(false);
+                btnEndSession.setEnabled(true);
+            } else {
+                sessionStatus.setText("No active session");
+                btnStartSession.setEnabled(true);
+                btnEndSession.setEnabled(false);
+            }
         }
+
     }
 }
