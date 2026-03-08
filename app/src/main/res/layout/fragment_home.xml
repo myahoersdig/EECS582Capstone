@@ -11,7 +11,7 @@ Creates a display fragment page for the profile
     android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp"
-    tools:context=".FirstFragment">
+    tools:context=".HomeFragment">
 
     <TextView
         android:id="@+id/sessionStatus"

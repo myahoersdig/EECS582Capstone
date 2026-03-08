@@ -13,7 +13,7 @@ ensure that the first page to show is the profile page
 package com.example.eecs582capstone;
 
 import android.os.Bundle;
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -27,9 +27,9 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        Fragment firstFragment = new FirstFragment();
-        Fragment secondFragment = new SecondFragment();
-        Fragment thirdFragment = new ThirdFragment();
+        Fragment firstFragment = new HomeFragment();
+        Fragment secondFragment = new ProfileFragment();
+        Fragment thirdFragment = new ResultsFragment();
 
         setCurrentFragment(secondFragment);
 

@@ -13,7 +13,7 @@ Modern profile layout for the Profile Fragment
     android:gravity="center_horizontal"
     android:padding="24dp"
     android:background="@android:color/white"
-    tools:context=".SecondFragment">
+    tools:context=".ProfileFragment">
 
     <!-- Profile Picture -->
     <ImageView

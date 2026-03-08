@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ThirdFragment extends Fragment {
+public class ResultsFragment extends Fragment {
 
     private TextView tvResults;
 
@@ -25,7 +25,7 @@ public class ThirdFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_third, container, false);
+        View view = inflater.inflate(R.layout.fragment_results, container, false);
 
         // Link the UI elements
         Button btnReadData = view.findViewById(R.id.btnReadData);
