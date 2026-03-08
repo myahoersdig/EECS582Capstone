@@ -6,20 +6,26 @@ initializes the second fragment (profile)
 
 package com.example.eecs582capstone;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import android.widget.TextView;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.widget.Button;
-import android.content.Intent;
+
+import com.google.android.material.card.MaterialCardView;
 
 public class ProfileFragment extends Fragment {
+
+    private MaterialCardView quizSummaryCard;
+    private TextView quizQ1, quizQ2, quizQ3, quizQ4, quizQ5, quizQ6, quizQ7, quizQ8;
+    private Button intakeQuizButton;
 
     @Nullable
     @Override
@@ -30,8 +36,8 @@ public class ProfileFragment extends Fragment {
         TextView username = view.findViewById(R.id.profileUsername);
         TextView emailText = view.findViewById(R.id.profileEmail);
 
-        SharedPreferences prefs = getActivity().getSharedPreferences("user_session", Context.MODE_PRIVATE);
-        String userEmail = prefs.getString("email", null);
+        SharedPreferences sessionPrefs = getActivity().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+        String userEmail = sessionPrefs.getString("email", null);
 
         if (userEmail != null) {
             dbConnect db = new dbConnect(getActivity());
@@ -42,10 +48,9 @@ public class ProfileFragment extends Fragment {
             }
         }
 
-        // Logout button (optional)
         Button logout = view.findViewById(R.id.logoutButton);
         logout.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = prefs.edit();
+            SharedPreferences.Editor editor = sessionPrefs.edit();
             editor.clear();
             editor.apply();
 
@@ -54,6 +59,54 @@ public class ProfileFragment extends Fragment {
             getActivity().finish();
         });
 
+        intakeQuizButton = view.findViewById(R.id.intakeQuizButton);
+        intakeQuizButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), UserIntakeQuizActivity.class);
+            startActivity(intent);
+        });
+
+        quizSummaryCard = view.findViewById(R.id.quizSummaryCard);
+        quizQ1 = view.findViewById(R.id.quiz_q1);
+        quizQ2 = view.findViewById(R.id.quiz_q2);
+        quizQ3 = view.findViewById(R.id.quiz_q3);
+        quizQ4 = view.findViewById(R.id.quiz_q4);
+        quizQ5 = view.findViewById(R.id.quiz_q5);
+        quizQ6 = view.findViewById(R.id.quiz_q6);
+        quizQ7 = view.findViewById(R.id.quiz_q7);
+        quizQ8 = view.findViewById(R.id.quiz_q8);
+
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadQuizSummary();
+    }
+
+    private void loadQuizSummary() {
+        SharedPreferences prefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
+
+        if (!prefs.getBoolean("completed", false)) {
+            quizSummaryCard.setVisibility(View.GONE);
+            intakeQuizButton.setText("Take Intake Quiz");
+            return;
+        }
+
+        intakeQuizButton.setText("Retake Intake Quiz");
+        quizSummaryCard.setVisibility(View.VISIBLE);
+
+        quizQ1.setText("Medication affecting cognition: " + yesNo(prefs, "q1"));
+        quizQ2.setText("Neurological conditions: " + yesNo(prefs, "q2"));
+        quizQ3.setText("Diagnosed with ADHD: " + yesNo(prefs, "q3"));
+        quizQ4.setText("Regular alcohol consumption: " + yesNo(prefs, "q4"));
+        quizQ5.setText("Regular tobacco/nicotine use: " + yesNo(prefs, "q5"));
+        quizQ6.setText("Consumes a balanced diet: " + yesNo(prefs, "q6"));
+        quizQ7.setText("Exercises regularly: " + yesNo(prefs, "q7"));
+        quizQ8.setText("Gets 8+ hours of sleep: " + yesNo(prefs, "q8"));
+    }
+
+    private String yesNo(SharedPreferences prefs, String key) {
+        return prefs.getBoolean(key, false) ? "Yes" : "No";
     }
 }
