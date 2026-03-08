@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         Fragment profileFragment = new ProfileFragment();
         Fragment resultsFragment = new ResultsFragment();
 
-        setCurrentFragment(profileFragment);
+        setCurrentFragment(homeFragment);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
