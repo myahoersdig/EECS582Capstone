@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/splash_text_image"
+        android:id="@+id/namelogo"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
         android:src="@drawable/attuneappname"
