@@ -3,16 +3,36 @@
 fragment_first.xml by Mya Hoersdig
 Creates a display fragment page for the profile
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp"
     tools:context=".FirstFragment">
 
     <TextView
+        android:id="@+id/sessionStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/home_fragment_text"
-        android:textSize="24sp"
-        android:layout_gravity="center"/>
-</FrameLayout>
+        android:layout_marginBottom="32dp"
+        android:text="No active session"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/btnStartSession"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Start Session" />
+
+    <Button
+        android:id="@+id/btnEndSession"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:text="End Session" />
+
+</LinearLayout>
