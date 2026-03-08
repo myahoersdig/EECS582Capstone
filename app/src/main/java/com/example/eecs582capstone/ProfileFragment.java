@@ -10,24 +10,22 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.annotation.NonNull;
+
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import android.widget.TextView;
-import java.util.Objects;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.widget.TextView;
 import android.widget.Button;
 import android.content.Intent;
 
-public class SecondFragment extends Fragment {
+public class ProfileFragment extends Fragment {
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_second, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         TextView username = view.findViewById(R.id.profileUsername);
         TextView emailText = view.findViewById(R.id.profileEmail);

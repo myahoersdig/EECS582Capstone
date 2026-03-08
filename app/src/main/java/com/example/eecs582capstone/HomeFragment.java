@@ -13,7 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-public class FirstFragment extends Fragment {
+public class HomeFragment extends Fragment {
 
     private TextView sessionStatus;
     private Button btnStartSession, btnEndSession;
@@ -23,7 +23,7 @@ public class FirstFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_first, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         sessionStatus = view.findViewById(R.id.sessionStatus);
         btnStartSession = view.findViewById(R.id.btnStartSession);
