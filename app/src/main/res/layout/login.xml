@@ -4,6 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:id="@+id/splash_text_image"
+        android:layout_width="400dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/attuneappname"
+        android:scaleType="centerInside"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/editEmailAddressLog"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.3"/>
+
     <EditText
         android:id="@+id/editEmailAddressLog"
         android:layout_width="0dp"
