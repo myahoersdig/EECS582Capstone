@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvDetailTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Session Parameters"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Sleep -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="How much sleep did you get last night?" android:textStyle="bold" />
+            <TextView android:id="@+id/tvSleep" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="7.5 hours" />
+
+            <!-- Meal -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="How long since your last meal?" android:textStyle="bold" />
+            <TextView android:id="@+id/tvMeal" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="3 hours" />
+
+            <!-- Caffeine -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Caffeine consumed today?" android:textStyle="bold" />
+            <TextView android:id="@+id/tvCaffeine" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="150mg at 8:30 AM" />
+
+            <!-- Mood -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Current mood?" android:textStyle="bold" />
+            <TextView android:id="@+id/tvMood" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="Neutral" />
+
+            <!-- Stress -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Current stress level (1-10)" android:textStyle="bold" />
+            <TextView android:id="@+id/tvStress" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="4" />
+
+            <!-- Location -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Location of test:" android:textStyle="bold" />
+            <TextView android:id="@+id/tvLocation" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="38.9582° N, 95.2361° W (Library Study Room)" />
+
+            <!-- Date/Time -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Date &amp; Time:" android:textStyle="bold" />
+            <TextView android:id="@+id/tvDateTime" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp" android:text="March 12, 2024 - 2:15 PM" />
+
+            <!-- Environment -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Environment Details:" android:textStyle="bold" android:textSize="16sp" android:layout_marginTop="8dp"/>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Light (1-10):" />
+            <ProgressBar android:id="@+id/pbLight" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="7" android:layout_marginBottom="8dp"/>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Noise Level (1-10):" />
+            <ProgressBar android:id="@+id/pbNoise" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="3" android:layout_marginBottom="8dp"/>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Familiarity (1-10):" />
+            <ProgressBar android:id="@+id/pbFamiliarity" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="9" android:layout_marginBottom="24dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back to Results" />
+
+</LinearLayout>

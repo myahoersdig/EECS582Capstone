@@ -19,13 +19,11 @@
         android:layout_weight="1"
         android:layout_marginTop="16dp">
 
-        <TextView
-            android:id="@+id/tvResults"
+        <LinearLayout
+            android:id="@+id/resultsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:text="Results will appear here..."
-            android:textSize="14sp" />
+            android:orientation="vertical" />
     </ScrollView>
 
 </LinearLayout>

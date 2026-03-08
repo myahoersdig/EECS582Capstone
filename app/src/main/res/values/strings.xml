@@ -1,13 +1,32 @@
 <resources>
-    <string name="app_name">Attune</string>
+    <string name="app_name">EECS582Capstone</string>
+    <string name="home">Home</string>
+    <string name="profile">Profile</string>
+    <string name="upload">Results</string>
+    <string name="upload_fragment_text">Results Screen</string>
+
+    <!-- Registration Strings -->
     <string name="first_name">First Name</string>
-    <string name="last_name">Last name</string>
-    <string name="password">Password</string>
-    <string name="reenter_password">ReEnter Password</string>
+    <string name="last_name">Last Name</string>
     <string name="email_address">Email Address</string>
-    <string name="regester">Regester</string>
-    <string name="home_fragment_text">Home</string>
-    <string name="profile_fragment_text">Profile</string>
-    <string name="upload_fragment_text">Upload</string>
-    <string name="register">register</string>
+    <string name="password">Password</string>
+    <string name="reenter_password">Re-enter Password</string>
+    <string name="register">Register</string>
+
+    <string-array name="mood_options">
+        <item>Anxious</item>
+        <item>Apprehensive</item>
+        <item>Cheerful</item>
+        <item>Depressed</item>
+        <item>Elevated</item>
+        <item>Euphoric</item>
+        <item>Fearful</item>
+        <item>Optimistic</item>
+        <item>Neutral</item>
+        <item>Panic</item>
+        <item>Pessimistic</item>
+        <item>Tearful</item>
+        <item>Tense</item>
+        <item>Worried</item>
+    </string-array>
 </resources>
