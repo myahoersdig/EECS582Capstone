@@ -27,21 +27,21 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        Fragment firstFragment = new HomeFragment();
-        Fragment secondFragment = new ProfileFragment();
-        Fragment thirdFragment = new ResultsFragment();
+        Fragment homeFragment = new HomeFragment();
+        Fragment profileFragment = new ProfileFragment();
+        Fragment resultsFragment = new ResultsFragment();
 
-        setCurrentFragment(secondFragment);
+        setCurrentFragment(profileFragment);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
             if (id == R.id.home) {
-                setCurrentFragment(firstFragment);
+                setCurrentFragment(homeFragment);
             } else if (id == R.id.profile) {
-                setCurrentFragment(secondFragment);
+                setCurrentFragment(profileFragment);
             } else if (id == R.id.upload) {
-                setCurrentFragment(thirdFragment);
+                setCurrentFragment(resultsFragment);
             }
             return true;
         });
