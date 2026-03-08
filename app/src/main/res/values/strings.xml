@@ -9,4 +9,5 @@
     <string name="home_fragment_text">Home</string>
     <string name="profile_fragment_text">Profile</string>
     <string name="upload_fragment_text">Upload</string>
+    <string name="register">register</string>
 </resources>
