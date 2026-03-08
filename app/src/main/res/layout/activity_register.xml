@@ -87,7 +87,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="@string/regester"
+        android:text="@string/register"
         app:layout_constraintEnd_toEndOf="@id/edtConfirmPasswordReg"
         app:layout_constraintStart_toStartOf="@id/edtConfirmPasswordReg"
         app:layout_constraintTop_toBottomOf="@id/edtConfirmPasswordReg" />
