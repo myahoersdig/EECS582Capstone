@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EECS582Capstone</string>
+    <string name="app_name">Attune</string>
     <string name="first_name">First Name</string>
     <string name="last_name">Last name</string>
     <string name="password">Password</string>
