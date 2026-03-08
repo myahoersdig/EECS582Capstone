@@ -14,6 +14,6 @@ Sets the icons to the correct fragment and drawable that was uploaded
         android:icon="@drawable/home"/>
     <item
         android:id="@+id/upload"
-        android:title="Upload"
+        android:title="Results"
         android:icon="@drawable/upload"/>
 </menu>
