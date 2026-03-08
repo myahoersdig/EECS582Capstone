@@ -37,6 +37,10 @@ public class ProfileFragment extends Fragment {
         TextView emailText = view.findViewById(R.id.profileEmail);
 
         SharedPreferences sessionPrefs = getActivity().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+
+        SharedPreferences intakePrefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
+
+
         String userEmail = sessionPrefs.getString("email", null);
 
         if (userEmail != null) {
@@ -53,6 +57,11 @@ public class ProfileFragment extends Fragment {
             SharedPreferences.Editor editor = sessionPrefs.edit();
             editor.clear();
             editor.apply();
+
+            //clear intake quiz
+            SharedPreferences.Editor editor_intake = intakePrefs.edit();
+            editor_intake.clear();
+            editor_intake.apply();
 
             Intent intent = new Intent(getActivity(), Entry.class);
             startActivity(intent);
