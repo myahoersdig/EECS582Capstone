@@ -19,8 +19,6 @@ Attune is an Android application that helps users track their cognitive focus an
   - [5. Profile Tab](#5-profile-tab)
   - [6. Intake Quiz](#6-intake-quiz)
   - [7. Session Detail View](#7-session-detail-view)
-- [Feature Status](#feature-status)
-- [Known Limitations](#known-limitations)
 - [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
 
@@ -78,8 +76,6 @@ On launch, the Attune branding screen displays for approximately 2 seconds befor
 2. Tap **Login**.
 3. On success, the app navigates to the main screen. Your session is persisted — you will remain logged in on future launches until you manually log out from the Profile tab.
 
-> **Security note:** Passwords are stored in plain text in the local SQLite database in the current build. See [Known Limitations](#known-limitations).
-
 ---
 
 ### 3. Home Tab
@@ -100,8 +96,6 @@ At the top of the screen is a card showing the status of your BrainBit Headband 
 2. Once the dot turns green and the status reads "Connected," session recording becomes available.
 3. Tap **Disconnect** at any time to sever the connection.
 
-> **The Bluetooth connection is a mock simulation.** The app does not communicate with a real BrainBit device over Bluetooth. See [Known Limitations](#known-limitations).
-
 #### Session Controls
 
 Two requirements must both be satisfied before **Start Session** becomes active:
@@ -118,8 +112,6 @@ Two requirements must both be satisfied before **Start Session** becomes active:
 **Ending a session:**
 1. Tap **End Session** when finished recording.
 2. The session is saved with an end timestamp in the local database.
-
-> **Note:** The pre-session survey fields are displayed but the responses are not currently saved or linked to the session record. This is a UI placeholder. See [Known Limitations](#known-limitations).
 
 #### Aggregated Results
 
@@ -154,8 +146,6 @@ The app ships with three pre-recorded EEG sessions in `assets/demo_sessions.json
 | `demo_stable_01` | Stable Focus (Low Variance) | High variance score, high quality score |
 | `demo_distracted_01` | Distracted (High Variance) | Low variance score, moderate quality score |
 | `demo_poor_signal_01` | Poor Signal (Dropouts) | Low quality score due to null samples and low `q` values |
-
-> **The app only processes bundled demo data.** Live EEG streaming from the BrainBit device is not yet implemented. See [Known Limitations](#known-limitations).
 
 ---
 
@@ -199,60 +189,6 @@ Tapping a session card in the Results tab opens a detail view showing contextual
 - Environment metrics (light level, noise level, location familiarity) as progress bars
 
 Tap **Back** to return to the Results tab.
-
-> **All data in this view is hardcoded mock data** mapped to specific session IDs for demonstration purposes. The view does not pull real pre-session survey responses. See [Known Limitations](#known-limitations).
-
----
-
-## Feature Status
-
-| Feature | Status |
-|---|---|
-| Splash screen | Complete |
-| User registration & login | Complete |
-| Session persistence (stay logged in) | Complete |
-| Bottom navigation (Home / Results / Profile) | Complete |
-| Intake quiz (8 questions, save & display answers) | Complete |
-| Intake quiz gating for session start | Complete |
-| Bluetooth device connection UI | Complete (mock only) |
-| BT connection gating for session start | Complete |
-| Session start/end with SQLite timestamps | Complete |
-| EEG data processing from demo JSON | Complete |
-| Focus score (variance-based, 1–10) | Complete |
-| Signal quality score (1–10) | Complete |
-| Aggregated history on Home tab | Complete |
-| Session result cards with progress bars | Complete |
-| Session detail view | Complete (mock data only) |
-| Pre-session survey dialog (UI) | Partial — data not saved |
-| Real Bluetooth communication with BrainBit | Not implemented |
-| Live EEG signal streaming & processing | Not implemented |
-| Pre-session survey responses saved to database | Not implemented |
-| Session detail view using real survey data | Not implemented |
-| User profile editing (name / email) | Not implemented |
-| Password reset | Not implemented |
-| Data export | Not implemented |
-
----
-
-## Known Limitations
-
-### Bluetooth is simulated
-The Connect/Disconnect flow is a mock state machine with a 2-second artificial delay. The app does not use Android Bluetooth APIs and does not communicate with a real BrainBit Headband. No `BLUETOOTH_SCAN` or `BLUETOOTH_CONNECT` permissions are declared in the manifest. Integration with the BrainBit SDK over BLE is planned for a future sprint.
-
-### EEG data is pre-recorded demo data
-The Results tab reads from a static `demo_sessions.json` file bundled in `assets/`. There is no live data pipeline from the headband. The three demo sessions demonstrate the three scoring scenarios (stable focus, distracted, poor signal).
-
-### Pre-session survey responses are not persisted
-The pre-session survey dialog captures sleep, caffeine, mood, stress, location, and environment fields, but none of these values are read or saved. Tapping **Start Reading** dismisses the dialog and creates a bare session record with no survey data attached.
-
-### Session detail view uses hardcoded data
-The Session Detail Fragment displays metadata via hard-coded `if/else` logic keyed on session ID rather than reading from the database. Only `demo_stable_01` and `demo_distracted_01` have specific mock values; all other session IDs fall through to a default neutral scenario.
-
-### Passwords are stored in plain text
-User passwords are written directly to the local SQLite database without hashing. This must be replaced with a secure hashing scheme (e.g., bcrypt) before any deployment involving real users.
-
-### Database operations run on the main thread
-All SQLite queries are executed synchronously on the UI thread. This should be migrated to background threads (e.g., `ExecutorService` or Room with LiveData) before handling larger datasets.
 
 ---
 
