@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +29,13 @@ public class HomeFragment extends Fragment {
     private dbConnect dbHelper;
     private int currentUserId = -1;
 
+    // Bluetooth mock state
+    private enum BtState { DISCONNECTED, CONNECTING, CONNECTED }
+    private BtState btState = BtState.DISCONNECTED;
+    private TextView tvBtStatus, tvBtStatusDot;
+    private Button btnBtConnect;
+    private final Handler btHandler = new Handler(Looper.getMainLooper());
+
     // Aggregated UI elements
     private LinearLayout layoutAggregatedResults;
     private TextView tvAggVarianceText, tvAggQualityText, tvSessionCount;
@@ -43,6 +52,12 @@ public class HomeFragment extends Fragment {
         sessionStatus = view.findViewById(R.id.sessionStatus);
         btnStartSession = view.findViewById(R.id.btnStartSession);
         btnEndSession = view.findViewById(R.id.btnEndSession);
+
+        tvBtStatusDot = view.findViewById(R.id.tvBtStatusDot);
+        tvBtStatus = view.findViewById(R.id.tvBtStatus);
+        btnBtConnect = view.findViewById(R.id.btnBtConnect);
+
+        btnBtConnect.setOnClickListener(v -> onBtConnectClicked());
 
         // Aggregated Views
         layoutAggregatedResults = view.findViewById(R.id.layoutAggregatedResults);
@@ -180,6 +195,10 @@ public class HomeFragment extends Fragment {
             sessionStatus.setText("Please complete the intake survey to unlock session recording.");
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
+        } else if (btState != BtState.CONNECTED) {
+            sessionStatus.setText("Connect your EEG device to start a session.");
+            btnStartSession.setEnabled(false);
+            btnEndSession.setEnabled(false);
         } else {
             boolean active = dbHelper.hasActiveSession(currentUserId);
             if (active) {
@@ -192,6 +211,46 @@ public class HomeFragment extends Fragment {
                 btnEndSession.setEnabled(false);
             }
         }
+    }
+
+    private void onBtConnectClicked() {
+        if (btState == BtState.DISCONNECTED) {
+            setBtState(BtState.CONNECTING);
+            btHandler.postDelayed(() -> {
+                if (btState == BtState.CONNECTING) {
+                    setBtState(BtState.CONNECTED);
+                }
+            }, 2000);
+        } else if (btState == BtState.CONNECTED) {
+            setBtState(BtState.DISCONNECTED);
+        }
+        // Do nothing while connecting
+    }
+
+    private void setBtState(BtState newState) {
+        btState = newState;
+        switch (newState) {
+            case DISCONNECTED:
+                tvBtStatus.setText("Disconnected");
+                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_disconnected);
+                btnBtConnect.setText("Connect");
+                btnBtConnect.setEnabled(true);
+                break;
+            case CONNECTING:
+                tvBtStatus.setText("Connecting…");
+                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connecting);
+                btnBtConnect.setText("Connecting…");
+                btnBtConnect.setEnabled(false);
+                break;
+            case CONNECTED:
+                tvBtStatus.setText("Connected");
+                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connected);
+                btnBtConnect.setText("Disconnect");
+                btnBtConnect.setEnabled(true);
+                Toast.makeText(getActivity(), "BrainBit Headband connected", Toast.LENGTH_SHORT).show();
+                break;
+        }
+        updateSessionUI();
     }
 
     @Override
