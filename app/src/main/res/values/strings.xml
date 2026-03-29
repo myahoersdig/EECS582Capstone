@@ -29,4 +29,19 @@
         <item>Tense</item>
         <item>Worried</item>
     </string-array>
+    <string-array name="genre_options">
+        <item>None</item>
+        <item>Pop</item>
+        <item>Hip-Hop</item>
+        <item>Rock</item>
+        <item>Classical</item>
+        <item>Jazz</item>
+        <item>Electronic</item>
+    </string-array>
+
+    <string-array name="lyrics_options">
+        <item>With Lyrics</item>
+        <item>Instrumental</item>
+        <item>No Preference</item>
+    </string-array>
 </resources>

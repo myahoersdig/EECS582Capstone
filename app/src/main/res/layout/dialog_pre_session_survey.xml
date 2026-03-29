@@ -41,6 +41,44 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Location description" android:layout_marginTop="8dp"/>
         <EditText android:id="@+id/etLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="e.g. Library" />
 
+        <!-- Music Preferences -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Music Genre"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerGenre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/genre_options" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lyrics Preference"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerLyrics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/lyrics_options" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Preferred Tempo (BPM)"
+            android:layout_marginTop="8dp"/>
+
+        <SeekBar
+            android:id="@+id/sbTempo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="200"
+            android:progress="100" />
+
         <!-- Environment -->
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Environment: Light Level (1-10)" android:layout_marginTop="8dp"/>
         <SeekBar android:id="@+id/sbLight" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="5" />
@@ -50,6 +88,8 @@
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Environment: Familiarity (1-10)" android:layout_marginTop="8dp"/>
         <SeekBar android:id="@+id/sbFamiliarity" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="5" />
+
+
 
     </LinearLayout>
 </ScrollView>
