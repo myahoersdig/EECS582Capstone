@@ -25,5 +25,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
     </ScrollView>
+    <Button
+        android:id="@+id/btnDeleteAllData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete All EEG Data" />
+
+    <Button
+        android:id="@+id/btnDeleteSurveyData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Delete Survey Data" />
 
 </LinearLayout>

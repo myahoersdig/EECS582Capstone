@@ -3,6 +3,7 @@ package com.example.eecs582capstone;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,16 +11,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 import java.util.Locale;
 
 public class HomeFragment extends Fragment {
@@ -41,13 +44,15 @@ public class HomeFragment extends Fragment {
     private TextView tvAggVarianceText, tvAggQualityText, tvSessionCount;
     private ProgressBar pbAggVariance, pbAggQuality;
 
-    private static final String PREFS_NAME = "eeg_results_prefs";
-    private static final String KEY_STORED_RESULTS = "stored_sessions";
+    // Optimal Focus Parameters UI
+    private TextView tvOptSleep, tvOptMeal, tvOptCaffeine, tvOptMood, tvOptStress, tvOptLocation;
+    private TextView tvOptGenre, tvOptLyrics, tvOptTempo;
+    private ProgressBar pbOptLight, pbOptNoise, pbOptFamiliarity;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_first, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         sessionStatus = view.findViewById(R.id.sessionStatus);
         btnStartSession = view.findViewById(R.id.btnStartSession);
@@ -67,9 +72,23 @@ public class HomeFragment extends Fragment {
         pbAggVariance = view.findViewById(R.id.pbAggVariance);
         pbAggQuality = view.findViewById(R.id.pbAggQuality);
 
-        dbHelper = new dbConnect(getActivity());
+        // Optimal Focus Parameters Views
+        tvOptSleep = view.findViewById(R.id.tvOptSleep);
+        tvOptMeal = view.findViewById(R.id.tvOptMeal);
+        tvOptCaffeine = view.findViewById(R.id.tvOptCaffeine);
+        tvOptMood = view.findViewById(R.id.tvOptMood);
+        tvOptStress = view.findViewById(R.id.tvOptStress);
+        tvOptLocation = view.findViewById(R.id.tvOptLocation);
+        tvOptGenre = view.findViewById(R.id.tvOptGenre);
+        tvOptLyrics = view.findViewById(R.id.tvOptLyrics);
+        tvOptTempo = view.findViewById(R.id.tvOptTempo);
+        pbOptLight = view.findViewById(R.id.pbOptLight);
+        pbOptNoise = view.findViewById(R.id.pbOptNoise);
+        pbOptFamiliarity = view.findViewById(R.id.pbOptFamiliarity);
 
-        SharedPreferences prefs = getActivity().getSharedPreferences("user_session", Context.MODE_PRIVATE);
+        dbHelper = new dbConnect(requireContext());
+
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("email", null);
 
         if (userEmail != null) {
@@ -81,6 +100,7 @@ public class HomeFragment extends Fragment {
 
         updateSessionUI();
         calculateAndDisplayAggregatedData();
+        loadOptimalFocusParameters();
 
         btnStartSession.setOnClickListener(v -> {
             if (currentUserId == -1) {
@@ -109,17 +129,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void calculateAndDisplayAggregatedData() {
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String storedJson = prefs.getString(KEY_STORED_RESULTS, null);
-
-        if (storedJson == null) {
+        if (currentUserId == -1) {
             layoutAggregatedResults.setVisibility(View.GONE);
             return;
         }
 
+        Cursor cursor = dbHelper.getAllSavedSessions(currentUserId);
+
         try {
-            JSONArray resultsArray = new JSONArray(storedJson);
-            if (resultsArray.length() == 0) {
+            if (cursor == null || !cursor.moveToFirst()) {
                 layoutAggregatedResults.setVisibility(View.GONE);
                 return;
             }
@@ -127,62 +145,140 @@ public class HomeFragment extends Fragment {
             double totalWeightedVariance = 0;
             double totalWeightedQuality = 0;
             double totalQualityWeight = 0;
+            int count = 0;
 
-            for (int i = 0; i < resultsArray.length(); i++) {
-                JSONObject result = resultsArray.getJSONObject(i);
-                int variance = result.getInt("varianceScore");
-                int quality = result.getInt("qualityScore");
+            do {
+                int variance = cursor.getInt(cursor.getColumnIndexOrThrow("variance_score"));
+                int quality = cursor.getInt(cursor.getColumnIndexOrThrow("quality_score"));
 
                 // Weighting: Higher quality sessions influence the focus score more
                 double weight = (double) quality / 10.0;
                 totalWeightedVariance += (variance * weight);
-                totalWeightedQuality += quality; // Simple average for quality
+                totalWeightedQuality += quality;
                 totalQualityWeight += weight;
-            }
+                count++;
+            } while (cursor.moveToNext());
 
             double aggFocus = totalQualityWeight > 0 ? totalWeightedVariance / totalQualityWeight : 0;
-            double aggQuality = (double) totalWeightedQuality / resultsArray.length();
+            double aggQuality = count > 0 ? totalWeightedQuality / count : 0;
 
             // UI Update
             layoutAggregatedResults.setVisibility(View.VISIBLE);
             tvAggVarianceText.setText(String.format(Locale.US, "Overall Focus Score: %.1f/10", aggFocus));
             tvAggQualityText.setText(String.format(Locale.US, "Overall Signal Quality: %.1f/10", aggQuality));
-            tvSessionCount.setText("Based on " + resultsArray.length() + " sessions");
-            
+            tvSessionCount.setText("Based on " + count + " sessions");
+
             pbAggVariance.setProgress((int) (aggFocus * 100)); // Max 1000 for smoother bar
             pbAggQuality.setProgress((int) (aggQuality * 100));
 
-        } catch (JSONException e) {
-            e.printStackTrace();
-            layoutAggregatedResults.setVisibility(View.GONE);
+        } finally {
+            if (cursor != null) cursor.close();
         }
+    }
+
+    private void loadOptimalFocusParameters() {
+        // Static “best data to enter” guidance for users before starting a session
+        tvOptSleep.setText("Sleep: Aim for about 8 hours");
+        tvOptMeal.setText("Last Meal: About 2 hours ago");
+        tvOptCaffeine.setText("Caffeine: Around 100 mg max");
+        tvOptMood.setText("Mood: Calm / Neutral / Focused");
+        tvOptStress.setText("Stress Level: Keep near 3/10");
+        tvOptLocation.setText("Location: Quiet, familiar place");
+        tvOptGenre.setText("Music Genre: Instrumental / Soft background music");
+        tvOptLyrics.setText("Lyrics Preference: No lyrics preferred");
+        tvOptTempo.setText("Preferred Tempo (BPM): 90–110");
+
+        pbOptLight.setProgress(5);
+        pbOptNoise.setProgress(2);
+        pbOptFamiliarity.setProgress(8);
+    }
+    private void setOptimalDefaults() {
+        tvOptSleep.setText("Sleep: N/A");
+        tvOptMeal.setText("Last Meal: N/A");
+        tvOptCaffeine.setText("Caffeine: N/A");
+        tvOptMood.setText("Mood: N/A");
+        tvOptStress.setText("Stress Level: N/A");
+        tvOptLocation.setText("Location: N/A");
+        tvOptGenre.setText("Music Genre: N/A");
+        tvOptLyrics.setText("Lyrics Preference: N/A");
+        tvOptTempo.setText("Preferred Tempo (BPM): N/A");
+        pbOptLight.setProgress(0);
+        pbOptNoise.setProgress(0);
+        pbOptFamiliarity.setProgress(0);
+    }
+
+    private String safeText(Cursor cursor, String columnName) {
+        String value = cursor.getString(cursor.getColumnIndexOrThrow(columnName));
+        return value == null || value.trim().isEmpty() ? "N/A" : value;
     }
 
     private void showPreSessionSurvey() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_pre_session_survey, null);
-        
+
+        // Get all inputs from dialog
+        EditText etSleep = dialogView.findViewById(R.id.etSleep);
+        EditText etMeal = dialogView.findViewById(R.id.etMeal);
+        EditText etCaffeine = dialogView.findViewById(R.id.etCaffeine);
+        Spinner spinnerMood = dialogView.findViewById(R.id.spinnerMood);
+        SeekBar sbStress = dialogView.findViewById(R.id.sbStress);
+        EditText etLocation = dialogView.findViewById(R.id.etLocation);
+        Spinner spinnerGenre = dialogView.findViewById(R.id.spinnerGenre);
+        Spinner spinnerLyrics = dialogView.findViewById(R.id.spinnerLyrics);
+        SeekBar sbTempo = dialogView.findViewById(R.id.sbTempo);
+        SeekBar sbLight = dialogView.findViewById(R.id.sbLight);
+        SeekBar sbNoise = dialogView.findViewById(R.id.sbNoise);
+        SeekBar sbFamiliarity = dialogView.findViewById(R.id.sbFamiliarity);
+
         builder.setView(dialogView)
-               .setPositiveButton("Start Reading", (dialog, id) -> startEegSession())
-               .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+                .setPositiveButton("Start Reading", (dialog, id) -> {
 
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
+                    // Collect values
+                    String sleep = etSleep.getText().toString().trim();
+                    String meal = etMeal.getText().toString().trim();
+                    String caffeine = etCaffeine.getText().toString().trim();
+                    String mood = spinnerMood.getSelectedItem().toString();
+                    int stress = sbStress.getProgress();
+                    String location = etLocation.getText().toString().trim();
+                    String genre = spinnerGenre.getSelectedItem().toString();
+                    String lyrics = spinnerLyrics.getSelectedItem().toString();
+                    int tempo = sbTempo.getProgress();
+                    int light = sbLight.getProgress();
+                    int noise = sbNoise.getProgress();
+                    int familiarity = sbFamiliarity.getProgress();
 
-    private void startEegSession() {
-        long sessionId = dbHelper.startSession(currentUserId);
-        if (sessionId != -1) {
-            Toast.makeText(getActivity(), "Survey submitted. Session started!", Toast.LENGTH_SHORT).show();
-            updateSessionUI();
-        } else {
-            Toast.makeText(getActivity(), "Failed to start session", Toast.LENGTH_SHORT).show();
-        }
+                    // Save full session with the pre-session survey values
+                    long sessionId = dbHelper.startSession(
+                            currentUserId,
+                            sleep,
+                            meal,
+                            caffeine,
+                            mood,
+                            stress,
+                            location,
+                            genre,
+                            lyrics,
+                            tempo,
+                            light,
+                            noise,
+                            familiarity
+                    );
+
+                    if (sessionId != -1) {
+                        Toast.makeText(getActivity(), "Session started!", Toast.LENGTH_SHORT).show();
+                        updateSessionUI();
+                    } else {
+                        Toast.makeText(getActivity(), "Failed to start session", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+
+        builder.create().show();
     }
 
     private void updateSessionUI() {
-        SharedPreferences prefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
 
         if (currentUserId == -1) {
             sessionStatus.setText("Please log in");
@@ -258,5 +354,7 @@ public class HomeFragment extends Fragment {
         super.onResume();
         // Refresh data whenever we navigate back home
         calculateAndDisplayAggregatedData();
+        loadOptimalFocusParameters();
+        updateSessionUI();
     }
 }
