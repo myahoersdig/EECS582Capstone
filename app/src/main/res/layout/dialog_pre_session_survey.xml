@@ -89,7 +89,31 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Environment: Familiarity (1-10)" android:layout_marginTop="8dp"/>
         <SeekBar android:id="@+id/sbFamiliarity" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="5" />
 
-
+        <!-- Optional Notes -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Session Notes (optional)"
+            android:layout_marginTop="16dp" />
+        <EditText
+            android:id="@+id/etSessionNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Any additional notes (max 500 characters)"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:maxLines="4"
+            android:gravity="top"
+            android:maxLength="500" />
+        <TextView
+            android:id="@+id/tvNotesCharCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0 / 500"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="end"
+            android:layout_marginBottom="8dp" />
 
     </LinearLayout>
 </ScrollView>

@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class dbConnect extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "appName";
-    private static final int DB_VERSION = 4;   // Incremented to trigger onUpgrade
+    private static final int DB_VERSION = 5;   // Incremented to trigger onUpgrade
 
     // Users table
     private static final String TABLE_USERS = "users";
@@ -42,6 +42,9 @@ public class dbConnect extends SQLiteOpenHelper {
     private static final String COL_GENRE = "music_genre";
     private static final String COL_LYRICS = "lyrics_preference";
     private static final String COL_TEMPO = "tempo_bpm";
+
+    // Optional session notes
+    private static final String COL_NOTES = "session_notes";
 
     // Legacy snapshot columns kept for compatibility
     private static final String COL_Q1 = "quiz_q1";
@@ -99,6 +102,7 @@ public class dbConnect extends SQLiteOpenHelper {
                 + COL_Q6 + " TEXT, "
                 + COL_Q7 + " TEXT, "
                 + COL_Q8 + " TEXT, "
+                + COL_NOTES + " TEXT, "
                 + "FOREIGN KEY(" + COL_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_ID + "))";
         db.execSQL(createSessionTable);
     }
@@ -141,6 +145,10 @@ public class dbConnect extends SQLiteOpenHelper {
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_Q6, "TEXT");
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_Q7, "TEXT");
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_Q8, "TEXT");
+        }
+        // Upgrade to version 5: add session notes column
+        if (oldVersion < 5) {
+            addColumnIfNeeded(db, TABLE_SESSIONS, COL_NOTES, "TEXT");
         }
         // Future upgrades can be chained here
     }
@@ -225,7 +233,8 @@ public class dbConnect extends SQLiteOpenHelper {
             int tempo,
             int light,
             int noise,
-            int familiarity
+            int familiarity,
+            String notes
     ) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -243,9 +252,26 @@ public class dbConnect extends SQLiteOpenHelper {
         values.put(COL_LIGHT, light);
         values.put(COL_NOISE, noise);
         values.put(COL_FAMILIARITY, familiarity);
+        if (notes != null && !notes.trim().isEmpty()) {
+            values.put(COL_NOTES, notes.trim());
+        }
         long sessionId = db.insert(TABLE_SESSIONS, null, values);
         db.close();
         return sessionId;
+    }
+
+    // Update just the notes field of an existing session
+    public boolean updateSessionNotes(long sessionId, String notes) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        if (notes == null || notes.trim().isEmpty()) {
+            values.putNull(COL_NOTES);
+        } else {
+            values.put(COL_NOTES, notes.trim());
+        }
+        int rows = db.update(TABLE_SESSIONS, values, COL_SESSION_ID + " = ?", new String[]{String.valueOf(sessionId)});
+        db.close();
+        return rows > 0;
     }
 
     public void endSession(long sessionId) {

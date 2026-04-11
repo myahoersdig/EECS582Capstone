@@ -3,11 +3,16 @@ package com.example.eecs582capstone;
 import android.app.AlertDialog;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +56,9 @@ public class SessionDetailFragment extends Fragment {
         ProgressBar pbLight = view.findViewById(R.id.pbLight);
         ProgressBar pbNoise = view.findViewById(R.id.pbNoise);
         ProgressBar pbFamiliarity = view.findViewById(R.id.pbFamiliarity);
+        TextView tvSessionNotes = view.findViewById(R.id.tvSessionNotes);
+        Button btnEditNote = view.findViewById(R.id.btnEditNote);
+        Button btnDeleteNote = view.findViewById(R.id.btnDeleteNote);
         Button btnBack = view.findViewById(R.id.btnBack);
         Button btnDelete = view.findViewById(R.id.btnDeleteSession);
 
@@ -81,10 +89,33 @@ public class SessionDetailFragment extends Fragment {
                 pbLight.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("light_level")));
                 pbNoise.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("noise_level")));
                 pbFamiliarity.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("familiarity")));
+
+                String notes = cursor.getString(cursor.getColumnIndexOrThrow("session_notes"));
+                tvSessionNotes.setText(notes != null && !notes.trim().isEmpty() ? notes : "No notes");
             }
         } finally {
             cursor.close();
         }
+
+        btnEditNote.setOnClickListener(v -> showEditNoteDialog(dbHelper, tvSessionNotes));
+
+        btnDeleteNote.setOnClickListener(v -> {
+            String current = tvSessionNotes.getText().toString();
+            if ("No notes".equals(current)) {
+                Toast.makeText(getContext(), "No note to delete", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Note")
+                    .setMessage("Remove the note for this session?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        dbHelper.updateSessionNotes(sessionId, null);
+                        tvSessionNotes.setText("No notes");
+                        Toast.makeText(getContext(), "Note deleted", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
 
         btnBack.setOnClickListener(v -> getParentFragmentManager().popBackStack());
 
@@ -103,6 +134,54 @@ public class SessionDetailFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void showEditNoteDialog(dbConnect dbHelper, TextView tvSessionNotes) {
+        EditText editText = new EditText(requireContext());
+        editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(500)});
+        editText.setHint("Enter session notes (max 500 characters)");
+        editText.setMinLines(3);
+        editText.setGravity(android.view.Gravity.TOP);
+
+        String existing = tvSessionNotes.getText().toString();
+        if (!"No notes".equals(existing)) {
+            editText.setText(existing);
+            editText.setSelection(existing.length());
+        }
+
+        // Char counter label
+        TextView charCount = new TextView(requireContext());
+        charCount.setText(editText.getText().length() + " / 500");
+        charCount.setTextSize(12);
+        charCount.setGravity(android.view.Gravity.END);
+        charCount.setPadding(0, 0, 8, 0);
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                charCount.setText(s.length() + " / 500");
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad / 2, pad, 0);
+        layout.addView(editText);
+        layout.addView(charCount);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Edit Session Note")
+                .setView(layout)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newNote = editText.getText().toString().trim();
+                    dbHelper.updateSessionNotes(sessionId, newNote.isEmpty() ? null : newNote);
+                    tvSessionNotes.setText(newNote.isEmpty() ? "No notes" : newNote);
+                    Toast.makeText(getContext(), "Note saved", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private String safeText(Cursor cursor, String columnName) {

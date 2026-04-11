@@ -1,12 +1,20 @@
 package com.example.eecs582capstone;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +29,17 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.util.Locale;
+import com.neurosdk2.helpers.PermissionHelper;
+import com.neurosdk2.helpers.interfaces.IPermissionListener;
 
 public class HomeFragment extends Fragment {
+
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
 
     private TextView sessionStatus;
     private Button btnStartSession, btnEndSession;
@@ -230,6 +244,16 @@ public class HomeFragment extends Fragment {
         SeekBar sbLight = dialogView.findViewById(R.id.sbLight);
         SeekBar sbNoise = dialogView.findViewById(R.id.sbNoise);
         SeekBar sbFamiliarity = dialogView.findViewById(R.id.sbFamiliarity);
+        EditText etSessionNotes = dialogView.findViewById(R.id.etSessionNotes);
+        TextView tvNotesCharCount = dialogView.findViewById(R.id.tvNotesCharCount);
+
+        etSessionNotes.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                tvNotesCharCount.setText(s.length() + " / 500");
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
 
         builder.setView(dialogView)
                 .setPositiveButton("Start Reading", (dialog, id) -> {
@@ -247,6 +271,7 @@ public class HomeFragment extends Fragment {
                     int light = sbLight.getProgress();
                     int noise = sbNoise.getProgress();
                     int familiarity = sbFamiliarity.getProgress();
+                    String notes = etSessionNotes.getText().toString().trim();
 
                     // Save full session with the pre-session survey values
                     long sessionId = dbHelper.startSession(
@@ -262,7 +287,8 @@ public class HomeFragment extends Fragment {
                             tempo,
                             light,
                             noise,
-                            familiarity
+                            familiarity,
+                            notes
                     );
 
                     if (sessionId != -1) {
@@ -311,16 +337,40 @@ public class HomeFragment extends Fragment {
 
     private void onBtConnectClicked() {
         if (btState == BtState.DISCONNECTED) {
-            setBtState(BtState.CONNECTING);
-            btHandler.postDelayed(() -> {
-                if (btState == BtState.CONNECTING) {
-                    setBtState(BtState.CONNECTED);
-                }
-            }, 2000);
+            if (!PermissionHelper.HasAllPermissions(requireContext())) {
+                PermissionHelper.RequestPermissions(requireContext(), (grantedPermissions, deniedPermissions, deniedPermanentlyPermissions) -> {
+                    if (!deniedPermissions.isEmpty()) {
+                        Toast.makeText(getContext(),
+                                "Bluetooth permissions are required to connect your EEG device.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                    if (!deniedPermanentlyPermissions.isEmpty()) {
+                        // User selected "Don't ask again" — send them to system settings
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Bluetooth Permission Required")
+                                .setMessage("Bluetooth access was permanently denied. Please enable it in Settings to connect your EEG device.")
+                                .setPositiveButton("Open Settings", (d, w) -> {
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.setData(Uri.fromParts("package", requireContext().getPackageName(), null));
+                                    startActivity(intent);
+                                })
+                                .setNegativeButton("Cancel", null)
+                                .show();
+                    }
+                });
+            } else {
+                setBtState(BtState.CONNECTING);
+                btHandler.postDelayed(() -> {
+                    if (btState == BtState.CONNECTING) {
+                        setBtState(BtState.CONNECTED);
+                    }
+                }, 2000);
+
+            }
+            // Do nothing while connecting
         } else if (btState == BtState.CONNECTED) {
-            setBtState(BtState.DISCONNECTED);
+        setBtState(BtState.DISCONNECTED);
         }
-        // Do nothing while connecting
     }
 
     private void setBtState(BtState newState) {
@@ -356,5 +406,38 @@ public class HomeFragment extends Fragment {
         calculateAndDisplayAggregatedData();
         loadOptimalFocusParameters();
         updateSessionUI();
+        maybeRequestNotificationPermission();
+    }
+
+    private void maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) return;
+
+        // Only prompt once per install
+        SharedPreferences prefs = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("notification_permission_asked", false)) return;
+        prefs.edit().putBoolean("notification_permission_asked", true).apply();
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Enable Notifications")
+                .setMessage("FocusFlow uses notifications to alert you when your EEG session results are ready to review. Tap Allow to enable notifications.")
+                .setPositiveButton("Allow", (d, w) ->
+                        ActivityCompat.requestPermissions(requireActivity(),
+                                new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                                REQUEST_NOTIFICATION_PERMISSION))
+                .setNegativeButton("Not Now", null)
+                .show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getContext(), "Notifications enabled", Toast.LENGTH_SHORT).show();
+            }
+            // Silently accepted if denied — user can enable later via Profile > Permissions
+        }
     }
 }
