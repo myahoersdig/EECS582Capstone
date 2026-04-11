@@ -6,10 +6,14 @@ initializes the second fragment (profile)
 
 package com.example.eecs582capstone;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +21,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.card.MaterialCardView;
@@ -26,6 +31,7 @@ public class ProfileFragment extends Fragment {
     private MaterialCardView quizSummaryCard;
     private TextView quizQ1, quizQ2, quizQ3, quizQ4, quizQ5, quizQ6, quizQ7, quizQ8;
     private Button intakeQuizButton;
+    private TextView tvNotificationStatus;
 
     @Nullable
     @Override
@@ -74,6 +80,14 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
+        tvNotificationStatus = view.findViewById(R.id.tvNotificationStatus);
+        Button btnManageNotifications = view.findViewById(R.id.btnManageNotifications);
+        btnManageNotifications.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+            startActivity(intent);
+        });
+
         quizSummaryCard = view.findViewById(R.id.quizSummaryCard);
         quizQ1 = view.findViewById(R.id.quiz_q1);
         quizQ2 = view.findViewById(R.id.quiz_q2);
@@ -91,6 +105,19 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadQuizSummary();
+        updateNotificationStatus();
+    }
+
+    private void updateNotificationStatus() {
+        if (tvNotificationStatus == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            boolean granted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED;
+            tvNotificationStatus.setText(granted ? "Enabled" : "Disabled");
+        } else {
+            // On Android 12 and below, notifications are allowed by default
+            tvNotificationStatus.setText("Enabled");
+        }
     }
 
     private void loadQuizSummary() {

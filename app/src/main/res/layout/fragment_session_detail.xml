@@ -214,6 +214,46 @@
                 android:max="10"
                 android:progress="0"
                 android:layout_marginBottom="24dp" />
+
+            <!-- Session Notes -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Session Notes:"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tvSessionNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No notes"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+
+                <Button
+                    android:id="@+id/btnEditNote"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="Edit Note" />
+
+                <Button
+                    android:id="@+id/btnDeleteNote"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="Delete Note" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
