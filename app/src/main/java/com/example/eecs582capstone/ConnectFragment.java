@@ -7,10 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.example.eecs582capstone.eeg.BrainBitManager;
+import com.example.eecs582capstone.eeg.SelectedDeviceStore;
+import com.neuromd.neurosdk.DeviceInfo;
 
 public class ConnectFragment extends Fragment {
 
@@ -20,14 +25,14 @@ public class ConnectFragment extends Fragment {
     private View indicatorT4;
     private TextView tvConnectStatus;
 
+    private BrainBitManager brainBitManager;
+    private String selectedDeviceName = "Unknown device";
+
     public ConnectFragment() {
-        // Required empty public constructor
     }
 
     private enum ElectrodeStatus {
-        RED,
-        YELLOW,
-        GREEN
+        RED, YELLOW, GREEN
     }
 
     @Nullable
@@ -44,38 +49,79 @@ public class ConnectFragment extends Fragment {
         indicatorT4 = root.findViewById(R.id.indicatorT4);
         tvConnectStatus = root.findViewById(R.id.tvConnectStatus);
 
+        setInitialStatus();
+
         Bundle args = getArguments();
         if (args != null) {
-            String deviceName = args.getString("device_name", "Unknown device");
-            tvConnectStatus.setText("Selected: " + deviceName);
-        } else {
-            tvConnectStatus.setText("No device selected");
+            selectedDeviceName = args.getString("device_name", "Unknown device");
         }
 
-        updateElectrodeIndicators(
-                ElectrodeStatus.RED,
-                ElectrodeStatus.RED,
-                ElectrodeStatus.RED,
-                ElectrodeStatus.RED
-        );
+        tvConnectStatus.setText("Selected: " + selectedDeviceName);
 
-        tvConnectStatus.setText("Not connected");
+        brainBitManager = new BrainBitManager(requireContext(), new BrainBitManager.Listener() {
+            @Override
+            public void onStateChanged(BrainBitManager.ConnectionState state, String message) {
+                if (!isAdded()) return;
+
+                switch (state) {
+                    case CONNECTING:
+                        tvConnectStatus.setText("Connecting to " + selectedDeviceName + "...");
+                        break;
+
+                    case CONNECTED:
+                        tvConnectStatus.setText("Connected to " + selectedDeviceName);
+                        // Temporary first version: show all green once connected
+                        updateElectrodeIndicators(
+                                ElectrodeStatus.GREEN,
+                                ElectrodeStatus.GREEN,
+                                ElectrodeStatus.GREEN,
+                                ElectrodeStatus.GREEN
+                        );
+                        brainBitManager.startSignal();
+                        break;
+
+                    case DISCONNECTED:
+                        tvConnectStatus.setText("Disconnected");
+                        setInitialStatus();
+                        break;
+
+                    case ERROR:
+                        tvConnectStatus.setText("Connection failed");
+                        setInitialStatus();
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+
+            @Override
+            public void onSignalStarted() {
+            }
+
+            @Override
+            public void onSignalStopped() {
+            }
+
+            @Override
+            public void onSignalPacketReceived(Object data) {
+                // Not wired yet in current BrainBitManager implementation
+            }
+        });
+
+        DeviceInfo selectedDevice = SelectedDeviceStore.getSelectedDevice();
+        if (selectedDevice == null) {
+            tvConnectStatus.setText("No device selected");
+        } else {
+            brainBitManager.connectToDevice(selectedDevice);
+        }
 
         return root;
     }
 
-    private void testElectrodeIndicators() {
-        setIndicatorColor(indicatorO1, "#31802b");   // green
-        setIndicatorColor(indicatorO2, "#e09636");   // yellow
-        setIndicatorColor(indicatorT3, "#c73d2e");   // red
-        setIndicatorColor(indicatorT4, "#31802b");   // green
-
-        tvConnectStatus.setText("Testing electrode indicators");
-    }
-
-    private void setIndicatorColor(View indicator, String colorHex) {
-        GradientDrawable bg = (GradientDrawable) indicator.getBackground().mutate();
-        bg.setColor(Color.parseColor(colorHex));
+    private void setInitialStatus() {
+        setIndicatorStatus(indicatorO1, ElectrodeStatus.RED);
+        setIndicatorStatus(indicatorO2, ElectrodeStatus.RED);
+        setIndicatorStatus(indicatorT3, ElectrodeStatus.RED);
+        setIndicatorStatus(indicatorT4, ElectrodeStatus.RED);
     }
 
     private void setIndicatorStatus(View indicator, ElectrodeStatus status) {
@@ -106,5 +152,14 @@ public class ConnectFragment extends Fragment {
         setIndicatorStatus(indicatorO2, o2);
         setIndicatorStatus(indicatorT3, t3);
         setIndicatorStatus(indicatorT4, t4);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (brainBitManager != null) {
+            brainBitManager.release();
+            brainBitManager = null;
+        }
     }
 }

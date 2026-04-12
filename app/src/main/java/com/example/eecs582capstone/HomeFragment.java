@@ -9,8 +9,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -33,9 +31,6 @@ import androidx.fragment.app.Fragment;
 
 import java.util.Locale;
 
-import com.example.eecs582capstone.eeg.BrainBitManager;
-import com.example.eecs582capstone.DeviceScanFragment;
-import com.example.eecs582capstone.ConnectFragment;
 
 public class HomeFragment extends Fragment {
 
@@ -47,11 +42,8 @@ public class HomeFragment extends Fragment {
     private int currentUserId = -1;
 
     // Bluetooth mock state
-    private enum BtState { DISCONNECTED, CONNECTING, CONNECTED }
-    private BtState btState = BtState.DISCONNECTED;
     private TextView tvBtStatus, tvBtStatusDot;
     private Button btnBtConnect;
-    private final Handler btHandler = new Handler(Looper.getMainLooper());
 
     // Aggregated UI elements
     private LinearLayout layoutAggregatedResults;
@@ -63,8 +55,6 @@ public class HomeFragment extends Fragment {
     private TextView tvOptGenre, tvOptLyrics, tvOptTempo;
     private ProgressBar pbOptLight, pbOptNoise, pbOptFamiliarity;
 
-    private BrainBitManager brainBitManager;
-    private int livePacketCount = 0;
 
     @Nullable
     @Override
@@ -139,46 +129,6 @@ public class HomeFragment extends Fragment {
                 updateSessionUI();
             } else {
                 Toast.makeText(getActivity(), "No active session", Toast.LENGTH_SHORT).show();
-            }
-        });
-        brainBitManager = new BrainBitManager(requireContext(), new BrainBitManager.Listener() {
-            @Override
-            public void onStateChanged(BrainBitManager.ConnectionState state, String message) {
-                switch (state) {
-                    case DISCONNECTED:
-                        setBtUiDisconnected();
-                        break;
-                    case CONNECTING:
-                        setBtUiConnecting();
-                        break;
-                    case CONNECTED:
-                        setBtUiConnected();
-                        brainBitManager.startSignal(); // first deliverable: confirm packets arrive
-                        break;
-                    case ERROR:
-                        setBtUiDisconnected();
-                        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
-                        break;
-                }
-                updateSessionUI();
-            }
-
-            @Override
-            public void onSignalStarted() {
-
-            }
-
-            @Override
-            public void onSignalStopped() {
-
-            }
-
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onSignalPacketReceived(Object data) {
-                livePacketCount++;
-                tvBtStatus.setText("Connected • packets: " + livePacketCount);
-                // later: pass packet into session buffer/repository
             }
         });
 
@@ -365,12 +315,8 @@ public class HomeFragment extends Fragment {
             sessionStatus.setText("Please complete the intake survey to unlock session recording.");
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
-        } else if (btState != BtState.CONNECTED) {
-            sessionStatus.setText("Connect your EEG device to start a session.");
-            btnStartSession.setEnabled(false);
-            btnEndSession.setEnabled(false);
         } else {
-            boolean active = dbHelper.hasActiveSession(currentUserId);
+        boolean active = dbHelper.hasActiveSession(currentUserId);
             if (active) {
                 sessionStatus.setText("Session in progress");
                 btnStartSession.setEnabled(false);
@@ -391,27 +337,6 @@ public class HomeFragment extends Fragment {
                 .commit();
     }
 
-    private void setBtUiDisconnected() {
-        tvBtStatus.setText("Disconnected");
-        tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_disconnected);
-        btnBtConnect.setText("Connect");
-        btnBtConnect.setEnabled(true);
-    }
-
-    private void setBtUiConnecting() {
-        tvBtStatus.setText("Connecting…");
-        tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connecting);
-        btnBtConnect.setText("Connecting…");
-        btnBtConnect.setEnabled(false);
-    }
-
-    private void setBtUiConnected() {
-        tvBtStatus.setText("Connected");
-        tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connected);
-        btnBtConnect.setText("Disconnect");
-        btnBtConnect.setEnabled(true);
-        Toast.makeText(getActivity(), "BrainBit Headband connected", Toast.LENGTH_SHORT).show();
-    }
 
     @Override
     public void onResume() {
@@ -442,24 +367,5 @@ public class HomeFragment extends Fragment {
                                 REQUEST_NOTIFICATION_PERMISSION))
                 .setNegativeButton("Not Now", null)
                 .show();
-    }
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-
-        if (brainBitManager != null) {
-            brainBitManager.release();
-            brainBitManager = null;
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(getContext(), "Notifications enabled", Toast.LENGTH_SHORT).show();
-            }
-            // Silently accepted if denied — user can enable later via Profile > Permissions
-        }
     }
 }

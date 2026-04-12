@@ -46,6 +46,29 @@ public class BrainBitManager {
         this.listener = listener;
     }
 
+
+    public void connectToDevice(DeviceInfo target) {
+        if (target == null) {
+            postState(ConnectionState.ERROR, "No device selected");
+            return;
+        }
+
+        postState(ConnectionState.CONNECTING, "Connecting to selected BrainBit...");
+
+        executor.execute(() -> {
+            try {
+                deviceEnumerator = new DeviceEnumerator(context, DeviceType.Brainbit);
+                device = deviceEnumerator.createDevice(target);
+                device.connect();
+                postState(ConnectionState.CONNECTED, "BrainBit connected");
+            } catch (Exception e) {
+                Log.e("BrainBitManager", "Connection failed", e);
+                postState(ConnectionState.ERROR,
+                        e.getMessage() != null ? e.getMessage() : "Connection failed");
+            }
+        });
+    }
+
     public void connect() {
         postState(ConnectionState.CONNECTING, "Searching for BrainBit...");
 

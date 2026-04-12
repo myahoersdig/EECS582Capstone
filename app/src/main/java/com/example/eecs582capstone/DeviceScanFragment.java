@@ -19,12 +19,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.util.Log;
+
 import com.neuromd.neurosdk.DeviceEnumerator;
 import com.neuromd.neurosdk.DeviceInfo;
 import com.neuromd.neurosdk.DeviceType;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.example.eecs582capstone.eeg.SelectedDeviceStore;
 
 public class DeviceScanFragment extends Fragment {
 
@@ -62,6 +65,8 @@ public class DeviceScanFragment extends Fragment {
 
         lvDevices.setOnItemClickListener((parent, view, position, id) -> {
             DeviceInfo selectedDevice = foundDevices.get(position);
+
+            SelectedDeviceStore.setSelectedDevice(selectedDevice);
 
             Bundle args = new Bundle();
             args.putString("device_name", selectedDevice.toString());
@@ -139,7 +144,7 @@ public class DeviceScanFragment extends Fragment {
             try {
                 deviceEnumerator.close();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e("DeviceScanFragment", "Interrupted while closing device enumerator", e);
                 Thread.currentThread().interrupt();
             }
             deviceEnumerator = null;
