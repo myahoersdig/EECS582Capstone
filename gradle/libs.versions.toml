@@ -7,8 +7,11 @@ appcompat = "1.7.1"
 material = "1.13.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
+neurosdk2 = "1.0.6.34"
+neurosdk2Version = "1.0.6.34"
 
 [libraries]
+brainbitllc-neurosdk2 = { module = "com.github.BrainbitLLC:neurosdk2", version.ref = "neurosdk2Version" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -16,6 +19,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+neurosdk2 = { module = "com.github.Brainbit.LLC:neurosdk2", version.ref = "neurosdk2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

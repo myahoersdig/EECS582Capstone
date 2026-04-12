@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:id="@+id/tvConnectTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connect EEG"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvConnectStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Adjust the headband until all circles are green."
+        android:textSize="16sp"
+        android:textStyle=""
+        android:layout_marginBottom="24dp" />
+
+    <FrameLayout
+        android:id="@+id/headContainer"
+        android:layout_width="300dp"
+        android:layout_height="400dp">
+
+        <ImageView
+            android:id="@+id/imgHeadBase"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/head_base" />
+
+        <View
+            android:id="@+id/indicatorO1"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="55dp"
+            android:layout_marginTop="170dp"
+            android:background="@drawable/electrode_circle" />
+
+        <View
+            android:id="@+id/indicatorO2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="210dp"
+            android:layout_marginTop="170dp"
+            android:background="@drawable/electrode_circle" />
+
+        <View
+            android:id="@+id/indicatorT3"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="95dp"
+            android:layout_marginTop="280dp"
+            android:background="@drawable/electrode_circle" />
+
+        <View
+            android:id="@+id/indicatorT4"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="169dp"
+            android:layout_marginTop="280dp"
+            android:background="@drawable/electrode_circle" />
+    </FrameLayout>
+
+</LinearLayout>
