@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 
 import java.util.Locale;
 
+import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
 
 public class HomeFragment extends Fragment {
 
@@ -70,6 +71,7 @@ public class HomeFragment extends Fragment {
         btnBtConnect = view.findViewById(R.id.btnBtConnect);
 
         btnBtConnect.setOnClickListener(v -> onBtConnectClicked());
+        updateBluetoothStatusUI();
 
         // Aggregated Views
         layoutAggregatedResults = view.findViewById(R.id.layoutAggregatedResults);
@@ -329,6 +331,23 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    // could probably just add this into session UI
+    private void updateBluetoothStatusUI() {
+        boolean connected = BrainBitConnectionStore.hasManager();
+
+        if (connected) {
+            tvBtStatus.setText("Connected");
+            tvBtStatusDot.setText("●");
+            tvBtStatusDot.setTextColor(android.graphics.Color.parseColor("#31802b"));
+            btnBtConnect.setText("Reconnect / Change Device");
+        } else {
+            tvBtStatus.setText("Disconnected");
+            tvBtStatusDot.setText("●");
+            tvBtStatusDot.setTextColor(android.graphics.Color.parseColor("#c73d2e"));
+            btnBtConnect.setText("Connect Device");
+        }
+    }
+
     private void onBtConnectClicked() {
         getParentFragmentManager()
                 .beginTransaction()
@@ -346,6 +365,7 @@ public class HomeFragment extends Fragment {
         loadOptimalFocusParameters();
         updateSessionUI();
         maybeRequestNotificationPermission();
+        updateBluetoothStatusUI();
     }
 
     private void maybeRequestNotificationPermission() {

@@ -222,6 +222,7 @@ public class ResultsFragment extends Fragment {
         return ranked;
     }
 
+    // should make xml for this and connect it - riley
     private void addRankingSectionsToUi(LayoutInflater inflater, List<RankedCondition> rankedConditions) {
         if (rankedConditions.isEmpty()) {
             return;

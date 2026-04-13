@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.eecs582capstone.eeg.BrainBitManager;
 import com.example.eecs582capstone.eeg.SelectedDeviceStore;
+import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
 import com.neurosdk2.neuro.types.SignalChannelsData;
 import com.neurosdk2.neuro.types.SensorInfo;
 
@@ -25,11 +27,13 @@ public class ConnectFragment extends Fragment {
     private View indicatorT3;
     private View indicatorT4;
     private TextView tvConnectStatus;
-
+    private Button btnContinueToHome;
     private BrainBitManager brainBitManager;
     private String selectedDeviceName = "Unknown device";
 
     public ConnectFragment() {}
+
+    private boolean allElectrodesReady = false;
 
     private enum ElectrodeStatus {
         RED, YELLOW, GREEN
@@ -48,7 +52,8 @@ public class ConnectFragment extends Fragment {
         indicatorT3 = root.findViewById(R.id.indicatorT3);
         indicatorT4 = root.findViewById(R.id.indicatorT4);
         tvConnectStatus = root.findViewById(R.id.tvConnectStatus);
-
+        btnContinueToHome = root.findViewById(R.id.btnContinueToHome);
+        btnContinueToHome.setVisibility(View.GONE);
         setInitialStatus();
 
         Bundle args = getArguments();
@@ -57,6 +62,13 @@ public class ConnectFragment extends Fragment {
         }
 
         tvConnectStatus.setText("Selected: " + selectedDeviceName);
+        btnContinueToHome.setOnClickListener(v -> {
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flFragment, new HomeFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         brainBitManager = new BrainBitManager(requireContext(), new BrainBitManager.Listener() {
             @Override
@@ -148,6 +160,8 @@ public class ConnectFragment extends Fragment {
             }
         });
 
+        BrainBitConnectionStore.setManager(brainBitManager);
+
         SensorInfo selectedDevice = SelectedDeviceStore.getSelectedDevice();
         if (selectedDevice == null) {
             tvConnectStatus.setText("No device selected");
@@ -201,14 +215,20 @@ public class ConnectFragment extends Fragment {
         setIndicatorStatus(indicatorO2, o2);
         setIndicatorStatus(indicatorT3, t3);
         setIndicatorStatus(indicatorT4, t4);
+
+        boolean allGreen =
+                o1 == ElectrodeStatus.GREEN &&
+                        o2 == ElectrodeStatus.GREEN &&
+                        t3 == ElectrodeStatus.GREEN &&
+                        t4 == ElectrodeStatus.GREEN;
+
+        if (btnContinueToHome != null) {
+            btnContinueToHome.setVisibility(allGreen ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (brainBitManager != null) {
-            brainBitManager.release();
-            brainBitManager = null;
-        }
     }
 }

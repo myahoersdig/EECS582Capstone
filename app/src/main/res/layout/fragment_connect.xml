@@ -69,4 +69,12 @@
             android:background="@drawable/electrode_circle" />
     </FrameLayout>
 
+    <Button
+        android:id="@+id/btnContinueToHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Continue"
+        android:visibility="gone" />
+
 </LinearLayout>
