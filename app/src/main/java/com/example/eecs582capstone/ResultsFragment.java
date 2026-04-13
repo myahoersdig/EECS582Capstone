@@ -5,10 +5,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CalendarView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -24,6 +26,7 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Collections;
@@ -34,6 +37,27 @@ import java.util.Map;
 public class ResultsFragment extends Fragment {
 
     private LinearLayout resultsContainer;
+    private void displayResultsForDate(long start, long end) {
+        int userId = getLoggedInUserId();
+        if (userId == -1) return;
+
+        dbConnect dbHelper = new dbConnect(requireContext());
+        Cursor cursor = dbHelper.getSessionsByDate(userId, start, end);
+
+        displayFromCursor(cursor, true);
+    }
+    private void displayStoredResults() {
+        int userId = getLoggedInUserId();
+        if (userId == -1) {
+            Toast.makeText(getContext(), "No logged in user found.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        dbConnect dbHelper = new dbConnect(requireContext());
+        Cursor cursor = dbHelper.getAllSavedSessions(userId);
+
+        displayFromCursor(cursor, false);
+    }
 
     private static class ConditionAggregate {
         String key;
@@ -76,6 +100,19 @@ public class ResultsFragment extends Fragment {
         Button btnDeleteAllData = view.findViewById(R.id.btnDeleteAllData);
         Button btnDeleteSurveyData = view.findViewById(R.id.btnDeleteSurveyData);
         resultsContainer = view.findViewById(R.id.resultsContainer);
+        CalendarView calendarView = view.findViewById(R.id.calendarView);
+
+        calendarView.setOnDateChangeListener((cv, year, month, day) -> {
+            Calendar cal = Calendar.getInstance();
+
+            cal.set(year, month, day, 0, 0, 0);
+            long start = cal.getTimeInMillis();
+
+            cal.set(year, month, day, 23, 59, 59);
+            long end = cal.getTimeInMillis();
+
+            displayResultsForDate(start, end);
+        });
 
         btnReadData.setOnClickListener(v -> processEegData());
         btnDeleteAllData.setOnClickListener(v -> confirmDeleteAllEegData());
@@ -96,7 +133,7 @@ public class ResultsFragment extends Fragment {
     /**
      * Reads saved EEG sessions from SQLite and populates the UI with stored session results.
      */
-    private void displayStoredResults() {
+    private void displayFromCursor(Cursor cursor, boolean showEmptyMessage) {
         resultsContainer.removeAllViews();
 
         int userId = getLoggedInUserId();
@@ -106,7 +143,8 @@ public class ResultsFragment extends Fragment {
         }
 
         dbConnect dbHelper = new dbConnect(requireContext());
-        Cursor cursor = dbHelper.getAllSavedSessions(userId);
+        // Cursor cursor = dbHelper.getAllSavedSessions(userId);
+        // above line is from merge conflict
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
         Map<String, ConditionAggregate> aggregateMap = new HashMap<>();
@@ -156,6 +194,14 @@ public class ResultsFragment extends Fragment {
                     }
 
                 } while (cursor.moveToNext());
+            } else if (showEmptyMessage) {
+                TextView noDataText = new TextView(getContext());
+                noDataText.setText("No data collected this day :[\nStart a new session now to record data!");
+                noDataText.setTextSize(16);
+                noDataText.setPadding(20, 40, 20, 40);
+                noDataText.setGravity(Gravity.CENTER);
+
+                resultsContainer.addView(noDataText);
             }
         } finally {
             cursor.close();

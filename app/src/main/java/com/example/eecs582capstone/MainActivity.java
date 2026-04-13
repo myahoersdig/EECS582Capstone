@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         Fragment resultsFragment = new ResultsFragment();
 
         setCurrentFragment(homeFragment);
+        bottomNavigationView.setSelectedItemId(R.id.home);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
