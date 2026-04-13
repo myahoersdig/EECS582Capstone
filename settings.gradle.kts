@@ -20,6 +20,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url = "https://artifactory.appodeal.com/appodeal-public/")
+        maven(url = "https://jitpack.io")
     }
 }
 

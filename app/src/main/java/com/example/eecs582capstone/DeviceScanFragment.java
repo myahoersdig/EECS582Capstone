@@ -4,46 +4,79 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import android.util.Log;
-
-import com.neuromd.neurosdk.DeviceEnumerator;
-import com.neuromd.neurosdk.DeviceInfo;
-import com.neuromd.neurosdk.DeviceType;
+import com.example.eecs582capstone.eeg.SelectedDeviceStore;
+import com.neurosdk2.neuro.Scanner;
+import com.neurosdk2.neuro.types.SensorFamily;
+import com.neurosdk2.neuro.types.SensorInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.example.eecs582capstone.eeg.SelectedDeviceStore;
 
 public class DeviceScanFragment extends Fragment {
 
-    private androidx.activity.result.ActivityResultLauncher<String[]> permissionLauncher;
+    private static final String TAG = "DeviceScanFragment";
+    private static final int SCAN_DURATION_MS = 20_000;
+    private static final int POLL_INTERVAL_MS = 2_000;
 
     private TextView tvScanStatus;
     private Button btnScanDevices;
     private ListView lvDevices;
 
     private ArrayAdapter<String> adapter;
-    private final List<DeviceInfo> foundDevices = new ArrayList<>();
+    private final List<SensorInfo> foundSensors = new ArrayList<>();
     private final List<String> deviceNames = new ArrayList<>();
 
-    private DeviceEnumerator deviceEnumerator;
+    private Scanner scanner;
+    private final Handler scanHandler = new Handler(Looper.getMainLooper());
+    private Runnable stopScanRunnable;
+    private Runnable countdownRunnable;
+    private Runnable pollRunnable;
+    private boolean isScanning = false;
+    private int remainingSeconds;
+
+    private ActivityResultLauncher<String[]> permissionLauncher;
 
     public DeviceScanFragment() {}
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        permissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                result -> {
+                    boolean allGranted = true;
+                    for (Boolean granted : result.values()) {
+                        if (granted == null || !granted) { allGranted = false; break; }
+                    }
+                    if (allGranted) {
+                        startScan();
+                    } else if (isAdded()) {
+                        tvScanStatus.setText("Permissions denied — cannot scan");
+                        Toast.makeText(requireContext(),
+                                "Bluetooth and Location permissions are required",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
     @Nullable
     @Override
@@ -61,15 +94,22 @@ public class DeviceScanFragment extends Fragment {
                 deviceNames);
         lvDevices.setAdapter(adapter);
 
-        btnScanDevices.setOnClickListener(v -> startScan());
+        btnScanDevices.setOnClickListener(v -> {
+            if (isScanning) {
+                stopScan(false);
+            } else {
+                checkPermissionsAndScan();
+            }
+        });
 
         lvDevices.setOnItemClickListener((parent, view, position, id) -> {
-            DeviceInfo selectedDevice = foundDevices.get(position);
-
-            SelectedDeviceStore.setSelectedDevice(selectedDevice);
+            SensorInfo selected = foundSensors.get(position);
+            SelectedDeviceStore.setSelectedDevice(selected);
 
             Bundle args = new Bundle();
-            args.putString("device_name", selectedDevice.toString());
+            String name = selected.getName();
+            if (name == null || name.isEmpty()) name = selected.getAddress();
+            args.putString("device_name", name);
 
             ConnectFragment connectFragment = new ConnectFragment();
             connectFragment.setArguments(args);
@@ -84,111 +124,174 @@ public class DeviceScanFragment extends Fragment {
         return root;
     }
 
-    private void startScan() {
-        if (!hasBluetoothPermissions()) {
-            tvScanStatus.setText("Requesting Bluetooth permissions...");
-            requestBluetoothPermissions();
-            return;
-        }
-
-        tvScanStatus.setText("Scanning for BrainBit devices...");
-        deviceNames.clear();
-        foundDevices.clear();
-        adapter.notifyDataSetChanged();
-
-        try {
-            deviceEnumerator = new DeviceEnumerator(requireContext(), DeviceType.Brainbit);
-
-            // simple first pass: wait a moment, then read current devices list
-            lvDevices.postDelayed(() -> {
-                if (!isAdded()) return;
-
-                List<DeviceInfo> devices = deviceEnumerator.devices();
-
-                if (devices == null || devices.isEmpty()) {
-                    tvScanStatus.setText("No BrainBit devices found");
-                    return;
-                }
-
-                foundDevices.addAll(devices);
-                for (DeviceInfo device : devices) {
-                    deviceNames.add(device.toString());
-                }
-                adapter.notifyDataSetChanged();
-                tvScanStatus.setText("Select a device");
-            }, 3000);
-
-        } catch (Exception e) {
-            tvScanStatus.setText("Scan failed");
-            Toast.makeText(requireContext(), "Scan failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    private void checkPermissionsAndScan() {
+        if (hasRequiredPermissions()) {
+            startScan();
+        } else {
+            tvScanStatus.setText("Requesting permissions...");
+            permissionLauncher.launch(requiredPermissions());
         }
     }
 
-    private boolean hasBluetoothPermissions() {
+    private boolean hasRequiredPermissions() {
+        for (String perm : requiredPermissions()) {
+            if (ContextCompat.checkSelfPermission(requireContext(), perm)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String[] requiredPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_SCAN)
-                    == PackageManager.PERMISSION_GRANTED
-                    && ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT)
-                    == PackageManager.PERMISSION_GRANTED;
+            return new String[]{
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            };
         } else {
-            return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED;
+            return new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            };
+        }
+    }
+
+    private void startScan() {
+        if (isScanning) return;
+
+        isScanning = true;
+        btnScanDevices.setText("Stop");
+        deviceNames.clear();
+        foundSensors.clear();
+        adapter.notifyDataSetChanged();
+
+        remainingSeconds = SCAN_DURATION_MS / 1000;
+        tickCountdown();
+
+        try {
+            closeScanner();
+            Log.d(TAG, "Creating Scanner(SensorLEBrainBit)...");
+            scanner = new Scanner(new SensorFamily[]{
+                    SensorFamily.SensorLEBrainBit,
+                    SensorFamily.SensorLEBrainBitBlack,
+                    SensorFamily.SensorLEBrainBit2,
+                    SensorFamily.SensorLEBrainBitPro,
+                    SensorFamily.SensorLEBrainBitFlex
+            });
+
+            scanner.sensorsChanged = (sc, sensors) -> {
+                Log.d(TAG, "sensorsChanged fired, count=" + (sensors != null ? sensors.size() : "null"));
+                scanHandler.post(this::refreshSensorList);
+            };
+
+            scanner.start();
+            Log.d(TAG, "Scanner started");
+
+            schedulePolls();
+
+            stopScanRunnable = () -> { if (isAdded()) stopScan(false); };
+            scanHandler.postDelayed(stopScanRunnable, SCAN_DURATION_MS);
+
+        } catch (Exception e) {
+            isScanning = false;
+            btnScanDevices.setText("Scan");
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            tvScanStatus.setText("Scan failed: " + msg);
+            Log.e(TAG, "Scanner creation failed", e);
+        }
+    }
+
+    private void stopScan(boolean navigatedAway) {
+        isScanning = false;
+
+        if (stopScanRunnable != null) { scanHandler.removeCallbacks(stopScanRunnable); stopScanRunnable = null; }
+        if (countdownRunnable != null) { scanHandler.removeCallbacks(countdownRunnable); countdownRunnable = null; }
+        if (pollRunnable != null)      { scanHandler.removeCallbacks(pollRunnable);      pollRunnable = null; }
+
+        try {
+            if (scanner != null) scanner.stop();
+        } catch (Exception e) {
+            Log.e(TAG, "scanner.stop() failed", e);
+        }
+
+        if (!navigatedAway) {
+            btnScanDevices.setText("Scan Again");
+            if (foundSensors.isEmpty()) {
+                tvScanStatus.setText("No devices found — make sure the headset is on and tap Scan Again");
+            } else {
+                tvScanStatus.setText("Found " + foundSensors.size() + " device(s) — select one below");
+            }
+        }
+    }
+
+    private void refreshSensorList() {
+        if (scanner == null || !isAdded()) return;
+
+        List<SensorInfo> current = scanner.getSensors();
+        Log.d(TAG, "getSensors() = " + (current == null ? "null" : current.size()));
+        if (current == null) return;
+
+        boolean changed = false;
+        for (SensorInfo s : current) {
+            boolean exists = false;
+            for (SensorInfo existing : foundSensors) {
+                if (existing.getAddress().equals(s.getAddress())) { exists = true; break; }
+            }
+            if (!exists) {
+                foundSensors.add(s);
+                String name = s.getName();
+                if (name == null || name.isEmpty()) name = "Unknown";
+                deviceNames.add(name + "  [" + s.getAddress() + "]");
+                changed = true;
+                Log.d(TAG, "Found: " + name + " @ " + s.getAddress());
+            }
+        }
+
+        if (changed) adapter.notifyDataSetChanged();
+    }
+
+    private void schedulePolls() {
+        pollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isScanning || !isAdded()) return;
+                refreshSensorList();
+                scanHandler.postDelayed(this, POLL_INTERVAL_MS);
+            }
+        };
+        scanHandler.postDelayed(pollRunnable, POLL_INTERVAL_MS);
+    }
+
+    private void tickCountdown() {
+        if (!isScanning || !isAdded()) return;
+        if (foundSensors.isEmpty()) {
+            tvScanStatus.setText("Scanning... " + remainingSeconds + "s");
+        }
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            countdownRunnable = this::tickCountdown;
+            scanHandler.postDelayed(countdownRunnable, 1000);
+        }
+    }
+
+    private void closeScanner() {
+        if (scanner != null) {
+            try {
+                scanner.sensorsChanged = null;
+                scanner.stop();
+                scanner.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Error closing scanner", e);
+            }
+            scanner = null;
         }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        if (deviceEnumerator != null) {
-            try {
-                deviceEnumerator.close();
-            } catch (InterruptedException e) {
-                Log.e("DeviceScanFragment", "Interrupted while closing device enumerator", e);
-                Thread.currentThread().interrupt();
-            }
-            deviceEnumerator = null;
-        }
-    }
-
-    private void requestBluetoothPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissionLauncher.launch(new String[]{
-                    Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_CONNECT
-            });
-        } else {
-            permissionLauncher.launch(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION
-            });
-        }
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        permissionLauncher = registerForActivityResult(
-                new androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
-                result -> {
-                    boolean allGranted = true;
-
-                    for (Boolean granted : result.values()) {
-                        if (granted == null || !granted) {
-                            allGranted = false;
-                            break;
-                        }
-                    }
-
-                    if (allGranted) {
-                        startScan();
-                    } else {
-                        if (isAdded()) {
-                            tvScanStatus.setText("Bluetooth permissions denied");
-                            Toast.makeText(requireContext(), "Bluetooth permissions are required", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-        );
+        stopScan(true);
+        closeScanner();
     }
 }

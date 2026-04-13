@@ -15,9 +15,14 @@ import androidx.fragment.app.Fragment;
 
 import com.example.eecs582capstone.eeg.BrainBitManager;
 import com.example.eecs582capstone.eeg.SelectedDeviceStore;
-import com.neuromd.neurosdk.DeviceInfo;
+import com.neurosdk2.neuro.types.SignalChannelsData;
+import com.neurosdk2.neuro.types.SensorInfo;
 
 public class ConnectFragment extends Fragment {
+
+    // Resistance thresholds in Ohms (tunable once real values are observed)
+    private static final double RESIST_GREEN_MAX  =  5_000.0;  // < 5 kΩ  → good contact
+    private static final double RESIST_YELLOW_MAX = 15_000.0;  // < 15 kΩ → acceptable
 
     private View indicatorO1;
     private View indicatorO2;
@@ -28,8 +33,7 @@ public class ConnectFragment extends Fragment {
     private BrainBitManager brainBitManager;
     private String selectedDeviceName = "Unknown device";
 
-    public ConnectFragment() {
-    }
+    public ConnectFragment() {}
 
     private enum ElectrodeStatus {
         RED, YELLOW, GREEN
@@ -70,13 +74,7 @@ public class ConnectFragment extends Fragment {
 
                     case CONNECTED:
                         tvConnectStatus.setText("Connected to " + selectedDeviceName);
-                        // Temporary first version: show all green once connected
-                        updateElectrodeIndicators(
-                                ElectrodeStatus.GREEN,
-                                ElectrodeStatus.GREEN,
-                                ElectrodeStatus.GREEN,
-                                ElectrodeStatus.GREEN
-                        );
+                        brainBitManager.startElectrodeMonitoring();
                         brainBitManager.startSignal();
                         break;
 
@@ -94,20 +92,28 @@ public class ConnectFragment extends Fragment {
             }
 
             @Override
-            public void onSignalStarted() {
-            }
+            public void onSignalStarted() {}
 
             @Override
-            public void onSignalStopped() {
-            }
+            public void onSignalStopped() {}
 
             @Override
-            public void onSignalPacketReceived(Object data) {
-                // Not wired yet in current BrainBitManager implementation
+            public void onSignalDataReceived(SignalChannelsData[] data) {}
+
+            @Override
+            public void onResistanceReceived(double o1Ohm, double o2Ohm,
+                                             double t3Ohm, double t4Ohm) {
+                if (!isAdded()) return;
+                updateElectrodeIndicators(
+                        resistToStatus(o1Ohm),
+                        resistToStatus(o2Ohm),
+                        resistToStatus(t3Ohm),
+                        resistToStatus(t4Ohm)
+                );
             }
         });
 
-        DeviceInfo selectedDevice = SelectedDeviceStore.getSelectedDevice();
+        SensorInfo selectedDevice = SelectedDeviceStore.getSelectedDevice();
         if (selectedDevice == null) {
             tvConnectStatus.setText("No device selected");
         } else {
@@ -115,6 +121,16 @@ public class ConnectFragment extends Fragment {
         }
 
         return root;
+    }
+
+    private ElectrodeStatus resistToStatus(double ohms) {
+        if (Double.isInfinite(ohms) || Double.isNaN(ohms) || ohms > RESIST_YELLOW_MAX) {
+            return ElectrodeStatus.RED;
+        } else if (ohms > RESIST_GREEN_MAX) {
+            return ElectrodeStatus.YELLOW;
+        } else {
+            return ElectrodeStatus.GREEN;
+        }
     }
 
     private void setInitialStatus() {
@@ -126,28 +142,18 @@ public class ConnectFragment extends Fragment {
 
     private void setIndicatorStatus(View indicator, ElectrodeStatus status) {
         int color;
-
         switch (status) {
-            case GREEN:
-                color = Color.parseColor("#31802b");
-                break;
-            case YELLOW:
-                color = Color.parseColor("#e09636");
-                break;
+            case GREEN:  color = Color.parseColor("#31802b"); break;
+            case YELLOW: color = Color.parseColor("#e09636"); break;
             case RED:
-            default:
-                color = Color.parseColor("#c73d2e");
-                break;
+            default:     color = Color.parseColor("#c73d2e"); break;
         }
-
         GradientDrawable bg = (GradientDrawable) indicator.getBackground().mutate();
         bg.setColor(color);
     }
 
-    private void updateElectrodeIndicators(ElectrodeStatus o1,
-                                           ElectrodeStatus o2,
-                                           ElectrodeStatus t3,
-                                           ElectrodeStatus t4) {
+    private void updateElectrodeIndicators(ElectrodeStatus o1, ElectrodeStatus o2,
+                                           ElectrodeStatus t3, ElectrodeStatus t4) {
         setIndicatorStatus(indicatorO1, o1);
         setIndicatorStatus(indicatorO2, o2);
         setIndicatorStatus(indicatorT3, t3);

@@ -1,18 +1,18 @@
 package com.example.eecs582capstone.eeg;
 
-import com.neuromd.neurosdk.DeviceInfo;
+import com.neurosdk2.neuro.types.SensorInfo;
 
 public final class SelectedDeviceStore {
-    private static DeviceInfo selectedDevice;
+    private static SensorInfo selectedDevice;
 
     private SelectedDeviceStore() {
     }
 
-    public static void setSelectedDevice(DeviceInfo deviceInfo) {
-        selectedDevice = deviceInfo;
+    public static void setSelectedDevice(SensorInfo sensorInfo) {
+        selectedDevice = sensorInfo;
     }
 
-    public static DeviceInfo getSelectedDevice() {
+    public static SensorInfo getSelectedDevice() {
         return selectedDevice;
     }
 

@@ -26,10 +26,47 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ResultsFragment extends Fragment {
 
     private LinearLayout resultsContainer;
+
+    private static class ConditionAggregate {
+        String key;
+        String displayText;
+        int totalVariance = 0;
+        int count = 0;
+
+        ConditionAggregate(String key, String displayText) {
+            this.key = key;
+            this.displayText = displayText;
+        }
+
+        void addScore(int varianceScore) {
+            totalVariance += varianceScore;
+            count++;
+        }
+
+        double getAverageVariance() {
+            return count == 0 ? 0.0 : (double) totalVariance / count;
+        }
+    }
+
+    private static class RankedCondition {
+        String displayText;
+        double averageVariance;
+        int sessionCount;
+
+        RankedCondition(String displayText, double averageVariance, int sessionCount) {
+            this.displayText = displayText;
+            this.averageVariance = averageVariance;
+            this.sessionCount = sessionCount;
+        }
+    }
 
     @Nullable
     @Override
@@ -70,8 +107,13 @@ public class ResultsFragment extends Fragment {
 
         dbConnect dbHelper = new dbConnect(requireContext());
         Cursor cursor = dbHelper.getAllSavedSessions(userId);
-
         LayoutInflater inflater = LayoutInflater.from(getContext());
+
+        Map<String, ConditionAggregate> aggregateMap = new HashMap<>();
+        List<long[]> sessionBasics = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        List<Integer> varianceScores = new ArrayList<>();
+        List<Integer> qualityScores = new ArrayList<>();
 
         try {
             if (cursor.moveToFirst()) {
@@ -81,12 +123,147 @@ public class ResultsFragment extends Fragment {
                     int varianceScore = cursor.getInt(cursor.getColumnIndexOrThrow("variance_score"));
                     int qualityScore = cursor.getInt(cursor.getColumnIndexOrThrow("quality_score"));
 
-                    addResultToUi(inflater, dbSessionId, label, varianceScore, qualityScore);
+                    sessionBasics.add(new long[]{dbSessionId});
+                    labels.add(label);
+                    varianceScores.add(varianceScore);
+                    qualityScores.add(qualityScore);
+
+                    if (varianceScore > 0) {
+                        String location = getSafeString(cursor, "location");
+                        String genre = getSafeString(cursor, "music_genre");
+                        String lyrics = getSafeString(cursor, "lyrics_preference");
+                        int tempo = cursor.getInt(cursor.getColumnIndexOrThrow("tempo_bpm"));
+                        long startTime = cursor.getLong(cursor.getColumnIndexOrThrow("start_time"));
+
+                        String tempoBucket = getTempoBucket(tempo);
+                        String timeBucket = getTimeOfDayBucket(startTime);
+
+                        String key = location + "|" + genre + "|" + lyrics + "|" + tempoBucket + "|" + timeBucket;
+                        String displayText =
+                                "Location: " + location +
+                                        "\nMusic: " + genre +
+                                        "\nLyrics: " + lyrics +
+                                        "\nTempo: " + tempoBucket +
+                                        "\nTime: " + timeBucket;
+
+                        ConditionAggregate aggregate = aggregateMap.get(key);
+                        if (aggregate == null) {
+                            aggregate = new ConditionAggregate(key, displayText);
+                            aggregateMap.put(key, aggregate);
+                        }
+
+                        aggregate.addScore(varianceScore);
+                    }
+
                 } while (cursor.moveToNext());
             }
         } finally {
             cursor.close();
         }
+
+        List<RankedCondition> rankedConditions = buildRankedConditions(aggregateMap);
+        addRankingSectionsToUi(inflater, rankedConditions);
+
+        for (int i = 0; i < sessionBasics.size(); i++) {
+            addResultToUi(
+                    inflater,
+                    sessionBasics.get(i)[0],
+                    labels.get(i),
+                    varianceScores.get(i),
+                    qualityScores.get(i)
+            );
+        }
+    }
+
+    private String getSafeString(Cursor cursor, String columnName) {
+        int index = cursor.getColumnIndex(columnName);
+        if (index == -1 || cursor.isNull(index)) {
+            return "Unknown";
+        }
+
+        String value = cursor.getString(index);
+        if (value == null || value.trim().isEmpty()) {
+            return "Unknown";
+        }
+
+        return value.trim();
+    }
+
+    private String getTempoBucket(int tempo) {
+        if (tempo <= 0) return "Unknown";
+        if (tempo < 80) return "Slow";
+        if (tempo <= 110) return "Moderate";
+        return "Fast";
+    }
+
+    private String getTimeOfDayBucket(long startTimeMillis) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.setTimeInMillis(startTimeMillis);
+        int hour = calendar.get(java.util.Calendar.HOUR_OF_DAY);
+
+        if (hour < 12) return "Morning";
+        if (hour < 17) return "Afternoon";
+        if (hour < 21) return "Evening";
+        return "Night";
+    }
+
+    private List<RankedCondition> buildRankedConditions(Map<String, ConditionAggregate> aggregateMap) {
+        List<RankedCondition> ranked = new ArrayList<>();
+
+        for (ConditionAggregate aggregate : aggregateMap.values()) {
+            ranked.add(new RankedCondition(
+                    aggregate.displayText,
+                    aggregate.getAverageVariance(),
+                    aggregate.count
+            ));
+        }
+
+        Collections.sort(ranked, (a, b) -> Double.compare(b.averageVariance, a.averageVariance));
+        return ranked;
+    }
+
+    private void addRankingSectionsToUi(LayoutInflater inflater, List<RankedCondition> rankedConditions) {
+        if (rankedConditions.isEmpty()) {
+            return;
+        }
+
+        View optimalHeader = inflater.inflate(android.R.layout.simple_list_item_1, resultsContainer, false);
+        ((TextView) optimalHeader.findViewById(android.R.id.text1)).setText("Top 3 Most Optimal Conditions");
+        resultsContainer.addView(optimalHeader);
+
+        int topCount = Math.min(3, rankedConditions.size());
+        for (int i = 0; i < topCount; i++) {
+            RankedCondition ranked = rankedConditions.get(i);
+            resultsContainer.addView(createRankingCard(inflater, i + 1, ranked, true));
+        }
+
+        View leastHeader = inflater.inflate(android.R.layout.simple_list_item_1, resultsContainer, false);
+        ((TextView) leastHeader.findViewById(android.R.id.text1)).setText("Top 3 Least Optimal Conditions");
+        resultsContainer.addView(leastHeader);
+
+        int startLeast = Math.max(0, rankedConditions.size() - 3);
+        int rankNumber = 1;
+        for (int i = rankedConditions.size() - 1; i >= startLeast; i--) {
+            RankedCondition ranked = rankedConditions.get(i);
+            resultsContainer.addView(createRankingCard(inflater, rankNumber, ranked, false));
+            rankNumber++;
+        }
+    }
+
+    private View createRankingCard(LayoutInflater inflater, int rank, RankedCondition ranked, boolean optimal) {
+        View card = inflater.inflate(android.R.layout.simple_list_item_2, resultsContainer, false);
+
+        TextView title = card.findViewById(android.R.id.text1);
+        TextView subtitle = card.findViewById(android.R.id.text2);
+
+        String prefix = optimal ? "Optimal #" : "Least Optimal #";
+        title.setText(prefix + rank + "  •  Avg Focus Stability: " + String.format(Locale.US, "%.1f/10", ranked.averageVariance));
+
+        subtitle.setText(
+                ranked.displayText + "\nSessions used: " + ranked.sessionCount
+        );
+
+        return card;
     }
 
     private void processEegData() {
