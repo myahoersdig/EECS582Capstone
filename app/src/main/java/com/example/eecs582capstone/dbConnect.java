@@ -398,4 +398,17 @@ public class dbConnect extends SQLiteOpenHelper {
         db.delete(TABLE_SESSIONS, COL_USER_ID + " = ?", new String[]{String.valueOf(userId)});
         db.close();
     }
+
+    public Cursor getSessionsByDate(int userId, long start, long end) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM sessions WHERE user_id=? AND label IS NOT NULL AND start_time BETWEEN ? AND ? ORDER BY start_time DESC",
+                new String[]{
+                        String.valueOf(userId),
+                        String.valueOf(start),
+                        String.valueOf(end)
+                }
+        );
+    }
 }

@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -18,13 +19,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.card.MaterialCardView;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 public class ProfileFragment extends Fragment {
 
@@ -32,7 +40,35 @@ public class ProfileFragment extends Fragment {
     private TextView quizQ1, quizQ2, quizQ3, quizQ4, quizQ5, quizQ6, quizQ7, quizQ8;
     private Button intakeQuizButton;
     private TextView tvNotificationStatus;
+    private ImageView profileImage;
+    private ActivityResultLauncher<String> imagePicker;
+    private void saveImageUri(Uri uri) {
+        try {
+            InputStream is = requireContext().getContentResolver().openInputStream(uri);
+            File file = new File(requireContext().getFilesDir(), "profile.jpg");
 
+            FileOutputStream fos = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int len;
+
+            while ((len = is.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+            }
+
+            fos.close();
+            is.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadImage() {
+        File file = new File(requireContext().getFilesDir(), "profile.jpg");
+        if (file.exists()) {
+            profileImage.setImageURI(Uri.fromFile(file));
+        }
+    }
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -46,8 +82,22 @@ public class ProfileFragment extends Fragment {
 
         SharedPreferences intakePrefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
 
-
         String userEmail = sessionPrefs.getString("email", null);
+
+        profileImage = view.findViewById(R.id.profileImage);
+        Button btnUploadImage = view.findViewById(R.id.btnUploadImage);
+
+        imagePicker = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        profileImage.setImageURI(uri);
+                        saveImageUri(uri);
+                    }
+                }
+        );
+        loadImage();
+        btnUploadImage.setOnClickListener(v -> imagePicker.launch("image/*"));
 
         if (userEmail != null) {
             dbConnect db = new dbConnect(getActivity());

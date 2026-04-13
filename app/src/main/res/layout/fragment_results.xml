@@ -13,18 +13,25 @@
         android:layout_height="wrap_content"
         android:text="Read Data" />
 
+    <CalendarView
+        android:id="@+id/calendarView"
+        android:layout_width="match_parent"
+        android:layout_height="324dp" />
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="16dp">
+        android:layout_height="95dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:id="@+id/resultsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical" >
+        </LinearLayout>
     </ScrollView>
+
     <Button
         android:id="@+id/btnDeleteAllData"
         android:layout_width="match_parent"
