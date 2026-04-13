@@ -1,18 +1,14 @@
 package com.example.eecs582capstone;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -34,8 +30,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.util.Locale;
-import com.neurosdk2.helpers.PermissionHelper;
-import com.neurosdk2.helpers.interfaces.IPermissionListener;
+
+import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
 
 public class HomeFragment extends Fragment {
 
@@ -47,11 +43,8 @@ public class HomeFragment extends Fragment {
     private int currentUserId = -1;
 
     // Bluetooth mock state
-    private enum BtState { DISCONNECTED, CONNECTING, CONNECTED }
-    private BtState btState = BtState.DISCONNECTED;
     private TextView tvBtStatus, tvBtStatusDot;
     private Button btnBtConnect;
-    private final Handler btHandler = new Handler(Looper.getMainLooper());
 
     // Aggregated UI elements
     private LinearLayout layoutAggregatedResults;
@@ -62,6 +55,7 @@ public class HomeFragment extends Fragment {
     private TextView tvOptSleep, tvOptMeal, tvOptCaffeine, tvOptMood, tvOptStress, tvOptLocation;
     private TextView tvOptGenre, tvOptLyrics, tvOptTempo;
     private ProgressBar pbOptLight, pbOptNoise, pbOptFamiliarity;
+
 
     @Nullable
     @Override
@@ -77,6 +71,7 @@ public class HomeFragment extends Fragment {
         btnBtConnect = view.findViewById(R.id.btnBtConnect);
 
         btnBtConnect.setOnClickListener(v -> onBtConnectClicked());
+        updateBluetoothStatusUI();
 
         // Aggregated Views
         layoutAggregatedResults = view.findViewById(R.id.layoutAggregatedResults);
@@ -190,6 +185,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void loadOptimalFocusParameters() {
         // Static “best data to enter” guidance for users before starting a session
         tvOptSleep.setText("Sleep: Aim for about 8 hours");
@@ -304,6 +300,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateSessionUI() {
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+
         SharedPreferences prefs = requireActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
 
         if (currentUserId == -1) {
@@ -317,12 +317,8 @@ public class HomeFragment extends Fragment {
             sessionStatus.setText("Please complete the intake survey to unlock session recording.");
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
-        } else if (btState != BtState.CONNECTED) {
-            sessionStatus.setText("Connect your EEG device to start a session.");
-            btnStartSession.setEnabled(false);
-            btnEndSession.setEnabled(false);
         } else {
-            boolean active = dbHelper.hasActiveSession(currentUserId);
+        boolean active = dbHelper.hasActiveSession(currentUserId);
             if (active) {
                 sessionStatus.setText("Session in progress");
                 btnStartSession.setEnabled(false);
@@ -335,69 +331,31 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    // could probably just add this into session UI
+    private void updateBluetoothStatusUI() {
+        boolean connected = BrainBitConnectionStore.hasManager();
+
+        if (connected) {
+            tvBtStatus.setText("Connected");
+            tvBtStatusDot.setText("●");
+            tvBtStatusDot.setTextColor(android.graphics.Color.parseColor("#31802b"));
+            btnBtConnect.setText("Reconnect / Change Device");
+        } else {
+            tvBtStatus.setText("Disconnected");
+            tvBtStatusDot.setText("●");
+            tvBtStatusDot.setTextColor(android.graphics.Color.parseColor("#c73d2e"));
+            btnBtConnect.setText("Connect Device");
+        }
+    }
+
     private void onBtConnectClicked() {
-        if (btState == BtState.DISCONNECTED) {
-            if (!PermissionHelper.HasAllPermissions(requireContext())) {
-                PermissionHelper.RequestPermissions(requireContext(), (grantedPermissions, deniedPermissions, deniedPermanentlyPermissions) -> {
-                    if (!deniedPermissions.isEmpty()) {
-                        Toast.makeText(getContext(),
-                                "Bluetooth permissions are required to connect your EEG device.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                    if (!deniedPermanentlyPermissions.isEmpty()) {
-                        // User selected "Don't ask again" — send them to system settings
-                        new AlertDialog.Builder(requireContext())
-                                .setTitle("Bluetooth Permission Required")
-                                .setMessage("Bluetooth access was permanently denied. Please enable it in Settings to connect your EEG device.")
-                                .setPositiveButton("Open Settings", (d, w) -> {
-                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                    intent.setData(Uri.fromParts("package", requireContext().getPackageName(), null));
-                                    startActivity(intent);
-                                })
-                                .setNegativeButton("Cancel", null)
-                                .show();
-                    }
-                });
-            } else {
-                setBtState(BtState.CONNECTING);
-                btHandler.postDelayed(() -> {
-                    if (btState == BtState.CONNECTING) {
-                        setBtState(BtState.CONNECTED);
-                    }
-                }, 2000);
-
-            }
-            // Do nothing while connecting
-        } else if (btState == BtState.CONNECTED) {
-        setBtState(BtState.DISCONNECTED);
-        }
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.flFragment, new DeviceScanFragment())
+                .addToBackStack(null)
+                .commit();
     }
 
-    private void setBtState(BtState newState) {
-        btState = newState;
-        switch (newState) {
-            case DISCONNECTED:
-                tvBtStatus.setText("Disconnected");
-                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_disconnected);
-                btnBtConnect.setText("Connect");
-                btnBtConnect.setEnabled(true);
-                break;
-            case CONNECTING:
-                tvBtStatus.setText("Connecting…");
-                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connecting);
-                btnBtConnect.setText("Connecting…");
-                btnBtConnect.setEnabled(false);
-                break;
-            case CONNECTED:
-                tvBtStatus.setText("Connected");
-                tvBtStatusDot.setBackgroundResource(R.drawable.status_dot_connected);
-                btnBtConnect.setText("Disconnect");
-                btnBtConnect.setEnabled(true);
-                Toast.makeText(getActivity(), "BrainBit Headband connected", Toast.LENGTH_SHORT).show();
-                break;
-        }
-        updateSessionUI();
-    }
 
     @Override
     public void onResume() {
@@ -407,6 +365,7 @@ public class HomeFragment extends Fragment {
         loadOptimalFocusParameters();
         updateSessionUI();
         maybeRequestNotificationPermission();
+        updateBluetoothStatusUI();
     }
 
     private void maybeRequestNotificationPermission() {
@@ -428,16 +387,5 @@ public class HomeFragment extends Fragment {
                                 REQUEST_NOTIFICATION_PERMISSION))
                 .setNegativeButton("Not Now", null)
                 .show();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(getContext(), "Notifications enabled", Toast.LENGTH_SHORT).show();
-            }
-            // Silently accepted if denied — user can enable later via Profile > Permissions
-        }
     }
 }
