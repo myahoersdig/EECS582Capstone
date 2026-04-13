@@ -41,6 +41,44 @@
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Location description" android:layout_marginTop="8dp"/>
         <EditText android:id="@+id/etLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="e.g. Library" />
 
+        <!-- Music Preferences -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Music Genre"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerGenre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/genre_options" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lyrics Preference"
+            android:layout_marginTop="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerLyrics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/lyrics_options" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Preferred Tempo (BPM)"
+            android:layout_marginTop="8dp"/>
+
+        <SeekBar
+            android:id="@+id/sbTempo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="200"
+            android:progress="100" />
+
         <!-- Environment -->
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Environment: Light Level (1-10)" android:layout_marginTop="8dp"/>
         <SeekBar android:id="@+id/sbLight" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="5" />
@@ -50,6 +88,32 @@
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Environment: Familiarity (1-10)" android:layout_marginTop="8dp"/>
         <SeekBar android:id="@+id/sbFamiliarity" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="10" android:progress="5" />
+
+        <!-- Optional Notes -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Session Notes (optional)"
+            android:layout_marginTop="16dp" />
+        <EditText
+            android:id="@+id/etSessionNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Any additional notes (max 500 characters)"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:maxLines="4"
+            android:gravity="top"
+            android:maxLength="500" />
+        <TextView
+            android:id="@+id/tvNotesCharCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0 / 500"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="end"
+            android:layout_marginBottom="8dp" />
 
     </LinearLayout>
 </ScrollView>

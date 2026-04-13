@@ -1,38 +1,313 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-fragment_first.xml by Mya Hoersdig
-Creates a display fragment page for the profile
--->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp"
     tools:context=".HomeFragment">
 
-    <TextView
-        android:id="@+id/sessionStatus"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:text="No active session"
-        android:textSize="18sp" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/btnStartSession"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Start Session" />
+        <!-- Bluetooth Device Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_card_background"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:elevation="4dp">
 
-    <Button
-        android:id="@+id/btnEndSession"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:enabled="false"
-        android:text="End Session" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EEG Device"
+                android:textSize="12sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginBottom="8dp" />
 
-</LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvBtStatusDot"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/status_dot_disconnected"
+                    android:layout_marginEnd="10dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvDeviceName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BrainBit Headband"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBtStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Disconnected"
+                        android:textSize="13sp"
+                        android:textColor="@android:color/darker_gray" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnBtConnect"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connect"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Active Session Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:id="@+id/sessionStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="No active session"
+                android:textSize="18sp"
+                android:textAlignment="center" />
+
+            <Button
+                android:id="@+id/btnStartSession"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Start Session" />
+
+            <Button
+                android:id="@+id/btnEndSession"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:enabled="false"
+                android:text="End Session" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Aggregated Results + Optimal Focus -->
+        <LinearLayout
+            android:id="@+id/layoutAggregatedResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aggregated History"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvAggVarianceText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Overall Focus Score: 0/10"
+                android:textSize="14sp" />
+
+            <ProgressBar
+                android:id="@+id/pbAggVariance"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="1000"
+                android:progress="0"
+                android:layout_marginBottom="12dp"
+                android:progressTint="@android:color/holo_blue_dark" />
+
+            <TextView
+                android:id="@+id/tvAggQualityText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Overall Signal Quality: 0/10"
+                android:textSize="14sp" />
+
+            <ProgressBar
+                android:id="@+id/pbAggQuality"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="1000"
+                android:progress="0"
+                android:progressTint="@android:color/holo_green_dark" />
+
+            <TextView
+                android:id="@+id/tvSessionCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Based on 0 sessions"
+                android:textSize="12sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Optimal Focus Parameters"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvOptSleep"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sleep: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptMeal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Last Meal: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptCaffeine"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Caffeine: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptMood"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mood: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptStress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stress Level: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Location: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/tvOptGenre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Music Genre: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptLyrics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lyrics Preference: N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvOptTempo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Preferred Tempo (BPM): N/A"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Environment Details:"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Light (1-10):" />
+
+            <ProgressBar
+                android:id="@+id/pbOptLight"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10"
+                android:progress="0"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Noise Level (1-10):" />
+
+            <ProgressBar
+                android:id="@+id/pbOptNoise"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10"
+                android:progress="0"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Familiarity (1-10):" />
+
+            <ProgressBar
+                android:id="@+id/pbOptFamiliarity"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="10"
+                android:progress="0"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -1,27 +1,41 @@
 package com.example.eecs582capstone;
 
+import android.app.AlertDialog;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import java.util.Date;
 
 public class SessionDetailFragment extends Fragment {
 
     private static final String ARG_SESSION_ID = "session_id";
 
-    public static SessionDetailFragment newInstance(String sessionId) {
+    public static SessionDetailFragment newInstance(long sessionId) {
         SessionDetailFragment fragment = new SessionDetailFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_SESSION_ID, sessionId);
+        args.putLong(ARG_SESSION_ID, sessionId);
         fragment.setArguments(args);
         return fragment;
     }
+
+    private long sessionId;
 
     @Nullable
     @Override
@@ -35,47 +49,143 @@ public class SessionDetailFragment extends Fragment {
         TextView tvMood = view.findViewById(R.id.tvMood);
         TextView tvStress = view.findViewById(R.id.tvStress);
         TextView tvLocation = view.findViewById(R.id.tvLocation);
+        TextView tvGenre = view.findViewById(R.id.tvGenre);
+        TextView tvLyrics = view.findViewById(R.id.tvLyrics);
+        TextView tvTempo = view.findViewById(R.id.tvTempo);
         TextView tvDateTime = view.findViewById(R.id.tvDateTime);
         ProgressBar pbLight = view.findViewById(R.id.pbLight);
         ProgressBar pbNoise = view.findViewById(R.id.pbNoise);
         ProgressBar pbFamiliarity = view.findViewById(R.id.pbFamiliarity);
+        TextView tvSessionNotes = view.findViewById(R.id.tvSessionNotes);
+        Button btnEditNote = view.findViewById(R.id.btnEditNote);
+        Button btnDeleteNote = view.findViewById(R.id.btnDeleteNote);
         Button btnBack = view.findViewById(R.id.btnBack);
+        Button btnDelete = view.findViewById(R.id.btnDeleteSession);
 
-        // Fill with Mock Data
-        String sessionId = getArguments() != null ? getArguments().getString(ARG_SESSION_ID) : "Unknown";
+        sessionId = getArguments() != null ? getArguments().getLong(ARG_SESSION_ID) : -1;
 
-        // Logic to provide different mock data based on the session ID
-        if ("demo_stable_01".equals(sessionId)) {
-            setMockData(tvSleep, tvMeal, tvCaffeine, tvMood, tvStress, tvLocation, tvDateTime, pbLight, pbNoise, pbFamiliarity,
-                    "8.0 hours", "2 hours", "None", "Euphoric", "2", "38.95 N, 95.23 W (Home Office)", "March 15, 9:00 AM", 8, 2, 10);
-        } else if ("demo_distracted_01".equals(sessionId)) {
-            setMockData(tvSleep, tvMeal, tvCaffeine, tvMood, tvStress, tvLocation, tvDateTime, pbLight, pbNoise, pbFamiliarity,
-                    "5.5 hours", "6 hours", "300mg at 12:00 PM", "Anxious", "8", "38.96 N, 95.24 W (Busy Coffee Shop)", "March 15, 1:30 PM", 5, 9, 3);
-        } else {
-            setMockData(tvSleep, tvMeal, tvCaffeine, tvMood, tvStress, tvLocation, tvDateTime, pbLight, pbNoise, pbFamiliarity,
-                    "7.0 hours", "4 hours", "80mg at 7:00 AM", "Neutral", "5", "38.95 N, 95.23 W (Library)", "March 15, 11:00 AM", 7, 4, 7);
+        // Load session from DB instead of mock data
+        dbConnect dbHelper = new dbConnect(requireContext());
+        Cursor cursor = dbHelper.getSavedSessionById(sessionId);
+
+        try {
+            if (cursor.moveToFirst()) {
+                tvSleep.setText(safeText(cursor, "sleep_hours"));
+                tvMeal.setText(safeText(cursor, "meal_info"));
+                tvCaffeine.setText(safeText(cursor, "caffeine"));
+                tvMood.setText(safeText(cursor, "mood"));
+                tvStress.setText(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("stress"))));
+                tvLocation.setText(safeText(cursor, "location"));
+                tvGenre.setText(safeText(cursor, "music_genre"));
+                tvLyrics.setText(safeText(cursor, "lyrics_preference"));
+                tvTempo.setText(String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("tempo_bpm"))));
+
+                // Format the stored timestamp into a readable date/time string
+                long startTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow("start_time"));
+                Date sessionDate = new Date(startTimeMillis);
+                String formattedDate = DateFormat.format("MMM dd, yyyy - h:mm a", sessionDate).toString();
+                tvDateTime.setText(formattedDate);
+
+                pbLight.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("light_level")));
+                pbNoise.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("noise_level")));
+                pbFamiliarity.setProgress(cursor.getInt(cursor.getColumnIndexOrThrow("familiarity")));
+
+                String notes = cursor.getString(cursor.getColumnIndexOrThrow("session_notes"));
+                tvSessionNotes.setText(notes != null && !notes.trim().isEmpty() ? notes : "No notes");
+            }
+        } finally {
+            cursor.close();
         }
 
-        btnBack.setOnClickListener(v -> {
-            getParentFragmentManager().popBackStack();
+        btnEditNote.setOnClickListener(v -> showEditNoteDialog(dbHelper, tvSessionNotes));
+
+        btnDeleteNote.setOnClickListener(v -> {
+            String current = tvSessionNotes.getText().toString();
+            if ("No notes".equals(current)) {
+                Toast.makeText(getContext(), "No note to delete", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Note")
+                    .setMessage("Remove the note for this session?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        dbHelper.updateSessionNotes(sessionId, null);
+                        tvSessionNotes.setText("No notes");
+                        Toast.makeText(getContext(), "Note deleted", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
+        btnBack.setOnClickListener(v -> getParentFragmentManager().popBackStack());
+
+        // DELETE WITH CONFIRMATION
+        btnDelete.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Delete Session")
+                    .setMessage("Are you sure you want to delete this session?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        dbHelper.deleteSession(sessionId);
+                        Toast.makeText(getContext(), "Session deleted", Toast.LENGTH_SHORT).show();
+                        getParentFragmentManager().popBackStack();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         return view;
     }
 
-    private void setMockData(TextView sleep, TextView meal, TextView caffeine, TextView mood, TextView stress, 
-                             TextView loc, TextView dt, ProgressBar light, ProgressBar noise, ProgressBar fam,
-                             String sVal, String mVal, String cVal, String moVal, String stVal, String lVal, String dtVal,
-                             int lProgress, int nProgress, int fProgress) {
-        sleep.setText(sVal);
-        meal.setText(mVal);
-        caffeine.setText(cVal);
-        mood.setText(moVal);
-        stress.setText(stVal);
-        loc.setText(lVal);
-        dt.setText(dtVal);
-        light.setProgress(lProgress);
-        noise.setProgress(nProgress);
-        fam.setProgress(fProgress);
+    private void showEditNoteDialog(dbConnect dbHelper, TextView tvSessionNotes) {
+        EditText editText = new EditText(requireContext());
+        editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(500)});
+        editText.setHint("Enter session notes (max 500 characters)");
+        editText.setMinLines(3);
+        editText.setGravity(android.view.Gravity.TOP);
+
+        String existing = tvSessionNotes.getText().toString();
+        if (!"No notes".equals(existing)) {
+            editText.setText(existing);
+            editText.setSelection(existing.length());
+        }
+
+        // Char counter label
+        TextView charCount = new TextView(requireContext());
+        charCount.setText(editText.getText().length() + " / 500");
+        charCount.setTextSize(12);
+        charCount.setGravity(android.view.Gravity.END);
+        charCount.setPadding(0, 0, 8, 0);
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                charCount.setText(s.length() + " / 500");
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad / 2, pad, 0);
+        layout.addView(editText);
+        layout.addView(charCount);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Edit Session Note")
+                .setView(layout)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newNote = editText.getText().toString().trim();
+                    dbHelper.updateSessionNotes(sessionId, newNote.isEmpty() ? null : newNote);
+                    tvSessionNotes.setText(newNote.isEmpty() ? "No notes" : newNote);
+                    Toast.makeText(getContext(), "Note saved", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private String safeText(Cursor cursor, String columnName) {
+        String value = cursor.getString(cursor.getColumnIndexOrThrow(columnName));
+        return value == null || value.trim().isEmpty() ? "N/A" : value;
     }
 }
