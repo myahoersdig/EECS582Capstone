@@ -57,6 +57,31 @@ public class DeviceScanFragment extends Fragment {
 
     public DeviceScanFragment() {}
 
+    private final Scanner.ScannerCallback scanCallback = (sc, sensors) -> {
+        if (!isAdded() || sensors == null) return;
+
+        scanHandler.post(() -> {
+            boolean changed = false;
+            for (SensorInfo s : sensors) {
+                boolean exists = false;
+                for (SensorInfo existing : foundSensors) {
+                    if (existing.getAddress().equals(s.getAddress())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    foundSensors.add(s);
+                    String name = s.getName();
+                    if (name == null || name.isEmpty()) name = "Unknown";
+                    deviceNames.add(name + "  [" + s.getAddress() + "]");
+                    changed = true;
+                }
+            }
+            if (changed) adapter.notifyDataSetChanged();
+        });
+    };
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,7 +130,7 @@ public class DeviceScanFragment extends Fragment {
         lvDevices.setOnItemClickListener((parent, view, position, id) -> {
             SensorInfo selected = foundSensors.get(position);
             SelectedDeviceStore.setSelectedDevice(selected);
-
+            stopScan(true);
             Bundle args = new Bundle();
             String name = selected.getName();
             if (name == null || name.isEmpty()) name = selected.getAddress();
@@ -173,22 +198,15 @@ public class DeviceScanFragment extends Fragment {
             closeScanner();
             Log.d(TAG, "Creating Scanner(SensorLEBrainBit)...");
             scanner = new Scanner(new SensorFamily[]{
-                    SensorFamily.SensorLEBrainBit,
-                    SensorFamily.SensorLEBrainBitBlack,
                     SensorFamily.SensorLEBrainBit2,
-                    SensorFamily.SensorLEBrainBitPro,
-                    SensorFamily.SensorLEBrainBitFlex
             });
 
-            scanner.sensorsChanged = (sc, sensors) -> {
-                Log.d(TAG, "sensorsChanged fired, count=" + (sensors != null ? sensors.size() : "null"));
-                scanHandler.post(this::refreshSensorList);
-            };
+            scanner.sensorsChanged = scanCallback;
 
             scanner.start();
             Log.d(TAG, "Scanner started");
 
-            schedulePolls();
+            // schedulePolls();
 
             stopScanRunnable = () -> { if (isAdded()) stopScan(false); };
             scanHandler.postDelayed(stopScanRunnable, SCAN_DURATION_MS);
@@ -203,14 +221,29 @@ public class DeviceScanFragment extends Fragment {
     }
 
     private void stopScan(boolean navigatedAway) {
+        Log.d(TAG, "stopScan called. isScanning=" + isScanning + ", navigatedAway=" + navigatedAway);
+        if (!isScanning) return;
+
         isScanning = false;
 
-        if (stopScanRunnable != null) { scanHandler.removeCallbacks(stopScanRunnable); stopScanRunnable = null; }
-        if (countdownRunnable != null) { scanHandler.removeCallbacks(countdownRunnable); countdownRunnable = null; }
-        if (pollRunnable != null)      { scanHandler.removeCallbacks(pollRunnable);      pollRunnable = null; }
+        if (stopScanRunnable != null) {
+            scanHandler.removeCallbacks(stopScanRunnable);
+            stopScanRunnable = null;
+        }
+        if (countdownRunnable != null) {
+            scanHandler.removeCallbacks(countdownRunnable);
+            countdownRunnable = null;
+        }
+        if (pollRunnable != null) {
+            scanHandler.removeCallbacks(pollRunnable);
+            pollRunnable = null;
+        }
 
         try {
-            if (scanner != null) scanner.stop();
+            if (scanner != null) {
+                scanner.stop();
+                scanner.sensorsChanged = null;
+            }
         } catch (Exception e) {
             Log.e(TAG, "scanner.stop() failed", e);
         }
@@ -279,7 +312,6 @@ public class DeviceScanFragment extends Fragment {
         if (scanner != null) {
             try {
                 scanner.sensorsChanged = null;
-                scanner.stop();
                 scanner.close();
             } catch (Exception e) {
                 Log.e(TAG, "Error closing scanner", e);
@@ -290,8 +322,11 @@ public class DeviceScanFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        Log.d(TAG, "onDestroyView called. isScanning=" + isScanning);
         super.onDestroyView();
-        stopScan(true);
+        if (isScanning) {
+            stopScan(true);
+        }
         closeScanner();
     }
 }

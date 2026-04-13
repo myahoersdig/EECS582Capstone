@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.neurosdk2.neuro.BrainBit2;
 import com.neurosdk2.neuro.Scanner;
+import com.neurosdk2.neuro.Sensor;
 import com.neurosdk2.neuro.interfaces.BrainBit2ResistDataReceived;
 import com.neurosdk2.neuro.interfaces.BrainBit2SignalDataReceived;
 import com.neurosdk2.neuro.types.ResistRefChannelsData;
@@ -46,14 +47,65 @@ public class BrainBitManager {
     private Scanner scanner;
     private BrainBit2 sensor;
 
+    private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
+
+    private String connectedDeviceName = "device";
+
+
+
+    private final BrainBit2SignalDataReceived signalCallback = new BrainBit2SignalDataReceived() {
+        @Override
+        public void onSignalDataReceived(SignalChannelsData[] data) {
+            mainHandler.post(() -> {
+                if (listener != null) listener.onSignalDataReceived(data);
+            });
+        }
+    };
+
+    private final BrainBit2ResistDataReceived resistCallback = new BrainBit2ResistDataReceived() {
+        @Override
+        public void onResistDataReceived(ResistRefChannelsData[] data) {
+            if (data == null || data.length == 0) return;
+
+            double[] samples = data[data.length - 1].getSamples();
+            if (samples == null || samples.length < 4) return;
+
+            mainHandler.post(() -> {
+                if (listener != null) {
+                    listener.onResistanceReceived(
+                            samples[0], samples[1], samples[2], samples[3]
+                    );
+                }
+            });
+        }
+    };
+
     public BrainBitManager(Context context, Listener listener) {
         this.context = context.getApplicationContext();
         this.listener = listener;
     }
 
+    private final com.neurosdk2.neuro.Sensor.SensorStateChanged stateCallback =
+            new com.neurosdk2.neuro.Sensor.SensorStateChanged() {
+                @Override
+                public void onStateChanged(SensorState state) {
+                    Log.d(TAG, "stateCallback fired: " + state);
+
+                    if (state == SensorState.StateInRange) {
+                        postState(ConnectionState.CONNECTED, "Connected to " + connectedDeviceName);
+                    } else {
+                        postState(ConnectionState.DISCONNECTED, "Disconnected");
+                    }
+                }
+            };
+
     public void connectToDevice(SensorInfo target) {
         if (target == null) {
             postState(ConnectionState.ERROR, "No device selected");
+            return;
+        }
+        if (connectionState == ConnectionState.CONNECTING ||
+                connectionState == ConnectionState.CONNECTED) {
             return;
         }
 
@@ -61,25 +113,26 @@ public class BrainBitManager {
 
         executor.execute(() -> {
             try {
+                connectedDeviceName = target.getName();
+
+                if (scanner != null) {
+                    try { scanner.close(); } catch (Exception ignored) {}
+                    scanner = null;
+                }
+
                 scanner = new Scanner(new SensorFamily[]{
-                        SensorFamily.SensorLEBrainBit,
-                        SensorFamily.SensorLEBrainBitBlack,
-                        SensorFamily.SensorLEBrainBit2,
-                        SensorFamily.SensorLEBrainBitPro,
-                        SensorFamily.SensorLEBrainBitFlex
+                        SensorFamily.SensorLEBrainBit2
                 });
+
                 sensor = (BrainBit2) scanner.createSensor(target);
 
-                sensor.sensorStateChanged = state -> {
-                    Log.d(TAG, "sensorStateChanged: " + state);
-                    if (state == SensorState.StateInRange) {
-                        postState(ConnectionState.CONNECTED, "Connected to " + target.getName());
-                    } else {
-                        postState(ConnectionState.DISCONNECTED, "Disconnected");
-                    }
-                };
+                try { scanner.close(); } catch (Exception ignored) {}
+                scanner = null;
 
-                sensor.connect();
+                sensor.sensorStateChanged = stateCallback;
+
+                Log.d(TAG, "createSensor returned successfully; posting CONNECTED");
+                postState(ConnectionState.CONNECTED, "Connected to " + connectedDeviceName);
 
             } catch (Exception e) {
                 Log.e(TAG, "Connection failed", e);
@@ -90,20 +143,15 @@ public class BrainBitManager {
     }
 
     public void startSignal() {
+        Log.d(TAG, "startSignal called. sensor=" + (sensor != null) + " state=" + connectionState);
         executor.execute(() -> {
             try {
-                if (sensor == null) return;
+                if (sensor == null || connectionState != ConnectionState.CONNECTED) return;
 
-                sensor.signalDataReceived = new BrainBit2SignalDataReceived() {
-                    @Override
-                    public void onSignalDataReceived(SignalChannelsData[] data) {
-                        mainHandler.post(() -> {
-                            if (listener != null) listener.onSignalDataReceived(data);
-                        });
-                    }
-                };
-
+                sensor.signalDataReceived = signalCallback;
                 sensor.execCommand(SensorCommand.StartSignal);
+                Log.d(TAG, "StartSignal command sent");
+
                 mainHandler.post(() -> {
                     if (listener != null) listener.onSignalStarted();
                 });
@@ -130,27 +178,14 @@ public class BrainBitManager {
     }
 
     public void startElectrodeMonitoring() {
+        Log.d(TAG, "startElectrodeMonitoring called. sensor=" + (sensor != null) + " state=" + connectionState);
         executor.execute(() -> {
             try {
-                if (sensor == null) return;
+                if (sensor == null || connectionState != ConnectionState.CONNECTED) return;
 
-                sensor.resistDataReceived = new BrainBit2ResistDataReceived() {
-                    @Override
-                    public void onResistDataReceived(ResistRefChannelsData[] data) {
-                        if (data == null || data.length == 0) return;
-                        // Take the most recent packet; samples[] = [O1, O2, T3, T4]
-                        double[] samples = data[data.length - 1].getSamples();
-                        if (samples == null || samples.length < 4) return;
-                        mainHandler.post(() -> {
-                            if (listener != null) {
-                                listener.onResistanceReceived(
-                                        samples[0], samples[1], samples[2], samples[3]);
-                            }
-                        });
-                    }
-                };
-
+                sensor.resistDataReceived = resistCallback;
                 sensor.execCommand(SensorCommand.StartResist);
+                Log.d(TAG, "StartResist command sent");
             } catch (Exception e) {
                 Log.e(TAG, "Start electrode monitoring failed", e);
             }
@@ -173,15 +208,21 @@ public class BrainBitManager {
         executor.execute(() -> {
             try {
                 if (sensor != null) {
+                    try { sensor.execCommand(SensorCommand.StopSignal); } catch (Exception ignored) {}
+                    try { sensor.execCommand(SensorCommand.StopResist); } catch (Exception ignored) {}
+
                     sensor.signalDataReceived = null;
                     sensor.resistDataReceived = null;
                     sensor.sensorStateChanged = null;
-                    sensor.disconnect();
-                    sensor.close();
+
+                    try { sensor.disconnect(); } catch (Exception ignored) {}
+                    try { sensor.close(); } catch (Exception ignored) {}
+
                     sensor = null;
                 }
+
                 if (scanner != null) {
-                    scanner.close();
+                    try { scanner.close(); } catch (Exception ignored) {}
                     scanner = null;
                 }
             } catch (Exception e) {
@@ -192,12 +233,15 @@ public class BrainBitManager {
         });
     }
 
+
     public void release() {
         disconnect();
-        executor.shutdownNow();
+        executor.shutdown();
     }
 
+
     private void postState(ConnectionState state, String message) {
+        connectionState = state;
         mainHandler.post(() -> {
             if (listener != null) listener.onStateChanged(state, message);
         });

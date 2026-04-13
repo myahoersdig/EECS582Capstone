@@ -20,10 +20,6 @@ import com.neurosdk2.neuro.types.SensorInfo;
 
 public class ConnectFragment extends Fragment {
 
-    // Resistance thresholds in Ohms (tunable once real values are observed)
-    private static final double RESIST_GREEN_MAX  =  5_000.0;  // < 5 kΩ  → good contact
-    private static final double RESIST_YELLOW_MAX = 15_000.0;  // < 15 kΩ → acceptable
-
     private View indicatorO1;
     private View indicatorO2;
     private View indicatorT3;
@@ -66,6 +62,7 @@ public class ConnectFragment extends Fragment {
             @Override
             public void onStateChanged(BrainBitManager.ConnectionState state, String message) {
                 if (!isAdded()) return;
+                android.util.Log.d("ConnectFragment", "onStateChanged: " + state + " msg=" + message);
 
                 switch (state) {
                     case CONNECTING:
@@ -74,7 +71,7 @@ public class ConnectFragment extends Fragment {
 
                     case CONNECTED:
                         tvConnectStatus.setText("Connected to " + selectedDeviceName);
-                        brainBitManager.startElectrodeMonitoring();
+                        android.util.Log.d("ConnectFragment", "Starting signal");
                         brainBitManager.startSignal();
                         break;
 
@@ -92,24 +89,62 @@ public class ConnectFragment extends Fragment {
             }
 
             @Override
-            public void onSignalStarted() {}
+            public void onSignalStarted() {
+                android.util.Log.d("ConnectFragment", "onSignalStarted");
+            }
 
             @Override
-            public void onSignalStopped() {}
+            public void onSignalStopped() {
+                android.util.Log.d("ConnectFragment", "onSignalStopped");
+            }
 
             @Override
-            public void onSignalDataReceived(SignalChannelsData[] data) {}
+            public void onSignalDataReceived(SignalChannelsData[] data) {
+                if (!isAdded() || data == null || data.length == 0) return;
+
+                double sumAbsO1 = 0, sumAbsO2 = 0, sumAbsT3 = 0, sumAbsT4 = 0;
+                int count = 0;
+
+                for (SignalChannelsData packet : data) {
+                    double[] samples = packet.getSamples();
+                    if (samples == null || samples.length < 4) continue;
+
+                    sumAbsO1 += Math.abs(samples[0]);
+                    sumAbsO2 += Math.abs(samples[1]);
+                    sumAbsT3 += Math.abs(samples[2]);
+                    sumAbsT4 += Math.abs(samples[3]);
+                    count++;
+                }
+
+                if (count == 0) return;
+
+                double avgO1 = sumAbsO1 / count;
+                double avgO2 = sumAbsO2 / count;
+                double avgT3 = sumAbsT3 / count;
+                double avgT4 = sumAbsT4 / count;
+
+                android.util.Log.d("ConnectFragment",
+                        "signal avg abs: O1=" + avgO1 +
+                                " O2=" + avgO2 +
+                                " T3=" + avgT3 +
+                                " T4=" + avgT4);
+
+                updateElectrodeIndicators(
+                        signalToStatus(avgO1),
+                        signalToStatus(avgO2),
+                        signalToStatus(avgT3),
+                        signalToStatus(avgT4)
+                );
+            }
 
             @Override
             public void onResistanceReceived(double o1Ohm, double o2Ohm,
                                              double t3Ohm, double t4Ohm) {
-                if (!isAdded()) return;
-                updateElectrodeIndicators(
-                        resistToStatus(o1Ohm),
-                        resistToStatus(o2Ohm),
-                        resistToStatus(t3Ohm),
-                        resistToStatus(t4Ohm)
-                );
+                android.util.Log.d("ConnectFragment",
+                        "onResistanceReceived O1=" + o1Ohm +
+                                " O2=" + o2Ohm +
+                                " T3=" + t3Ohm +
+                                " T4=" + t4Ohm);
             }
         });
 
@@ -123,10 +158,12 @@ public class ConnectFragment extends Fragment {
         return root;
     }
 
-    private ElectrodeStatus resistToStatus(double ohms) {
-        if (Double.isInfinite(ohms) || Double.isNaN(ohms) || ohms > RESIST_YELLOW_MAX) {
+    private ElectrodeStatus signalToStatus(double avgAbsVolts) {
+        if (Double.isNaN(avgAbsVolts) || Double.isInfinite(avgAbsVolts)) {
             return ElectrodeStatus.RED;
-        } else if (ohms > RESIST_GREEN_MAX) {
+        } else if (avgAbsVolts < 1e-7) {
+            return ElectrodeStatus.RED;
+        } else if (avgAbsVolts < 5e-7) {
             return ElectrodeStatus.YELLOW;
         } else {
             return ElectrodeStatus.GREEN;
@@ -143,10 +180,16 @@ public class ConnectFragment extends Fragment {
     private void setIndicatorStatus(View indicator, ElectrodeStatus status) {
         int color;
         switch (status) {
-            case GREEN:  color = Color.parseColor("#31802b"); break;
-            case YELLOW: color = Color.parseColor("#e09636"); break;
+            case GREEN:
+                color = Color.parseColor("#31802b");
+                break;
+            case YELLOW:
+                color = Color.parseColor("#e09636");
+                break;
             case RED:
-            default:     color = Color.parseColor("#c73d2e"); break;
+            default:
+                color = Color.parseColor("#c73d2e");
+                break;
         }
         GradientDrawable bg = (GradientDrawable) indicator.getBackground().mutate();
         bg.setColor(color);
