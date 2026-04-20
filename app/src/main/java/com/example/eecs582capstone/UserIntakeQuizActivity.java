@@ -1,5 +1,14 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: UserIntakeQuizActivity.java
+Author(s): Jackson Yanek & Abdelrahman Zeidan
+Created: 03-08-2026
+Last Modified: 04-19-2026
+Overview and Purpose: 
+Notes: 
+*/
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,6 +18,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+
+/*
+UserIntakeQuizActivity class: 
+*/
 
 public class UserIntakeQuizActivity extends AppCompatActivity {
 

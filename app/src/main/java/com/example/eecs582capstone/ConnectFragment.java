@@ -1,5 +1,21 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: ConnectFragment.java
+Author(s): Riley England
+Created: 04-11-2026
+Last Modified: 04-19-2026
+Overview and Purpose: Handles the UI and logic for connecting to a selected EEG device,
+monitoring signal quality from electrodes, and guiding the user through the connection
+process before proceeding to the main application.
+Notes: This fragment initializes the BrainBitManager, connects to the selected EEG device,
+and listens for signal data updates. It processes incoming EEG signal values to estimate
+electrode quality and updates UI indicators accordingly. The fragment ensures that all
+electrodes are in a stable (green) state before allowing the user to continue. It also
+bridges between device selection (SelectedDeviceStore) and active connection management
+(BrainBitConnectionStore).
+*/
+
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -19,6 +35,12 @@ import com.example.eecs582capstone.eeg.SelectedDeviceStore;
 import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
 import com.neurosdk2.neuro.types.SignalChannelsData;
 import com.neurosdk2.neuro.types.SensorInfo;
+
+/*
+ConnectFragment class: A UI controller responsible for managing the EEG device connection process,
+displaying real-time electrode signal quality, and allowing the user to proceed once all
+electrodes are properly connected.
+*/
 
 public class ConnectFragment extends Fragment {
 

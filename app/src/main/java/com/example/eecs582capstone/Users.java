@@ -13,6 +13,20 @@ Description of Class Purpose/Function: This class represents a user object and p
 */
 package com.example.eecs582capstone;
 
+/*
+Filename: Users.java
+Author(s): Abdelrahman Zeidan
+Created: 03-01-2026
+Last Modified: 03-01-2026
+Overview and Purpose: 
+Notes: 
+*/
+
+
+/*
+Users class: 
+*/
+
 public class Users {
     private int id;
     private String firstname;

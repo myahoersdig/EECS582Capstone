@@ -1,5 +1,21 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: DeviceScanFragment.java
+Author(s): Riley England
+Created: 04-12-2026
+Last Modified: 04-19-2026
+Overview and Purpose: Handles scanning for nearby EEG devices using the NeuroSDK,
+displaying discovered devices to the user, and allowing selection of a device to
+initiate the connection process.
+Notes: This fragment manages Bluetooth and location permission requests, performs
+asynchronous device scanning using the NeuroSDK Scanner, and updates the UI in real-time
+as devices are discovered. It maintains a list of detected devices, prevents duplicates,
+and transitions to the connection screen upon user selection. The scanning process is
+time-limited and includes a countdown indicator for user feedback.
+Pipeline is: Permissions -> Scan -> Select Device -> ConnectFragment
+*/
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -31,6 +47,10 @@ import com.neurosdk2.neuro.types.SensorInfo;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+DeviceScanFragment class: A UI controller responsible for scanning for available EEG devices,
+displaying them in a list, and allowing the user to select a device for connection.
+*/
 public class DeviceScanFragment extends Fragment {
 
     private static final String TAG = "DeviceScanFragment";

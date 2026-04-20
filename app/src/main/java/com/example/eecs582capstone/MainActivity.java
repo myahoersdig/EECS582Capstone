@@ -1,22 +1,28 @@
+
+package com.example.eecs582capstone;
+
 /*
-MainActivity.java by Mya Hoersdig
-
-initializes the BottomNavigationView and loads the corresponding fragments the icon is selected
-
+Filename: MainActivity.java
+Author(s): Mya Hoersdig, Jackson Yanek
+Created: 03-05-2026
+Last Modified: 04-19-2026
+Overview and Purpose: Initializes the BottomNavigationView and loads the corresponding fragments the icon is selected
+Notes: 
 fragments displayed are:
     FirstFragment (Home)
     SecondFragment (Profile)
     ThirdFragment (Upload)
-
-ensure that the first page to show is the profile page
- */
-package com.example.eecs582capstone;
+*/
 
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+/*
+MainActivity class: 
+*/
 
 public class MainActivity extends AppCompatActivity {
 

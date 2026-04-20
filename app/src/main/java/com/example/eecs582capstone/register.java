@@ -13,6 +13,15 @@ Description of Class Purpose/Function: This activity allows a user to create an 
 */
 package com.example.eecs582capstone;
 
+/*
+Filename: register.java
+Author(s): Abdelrahman Zeidan
+Created: 02-24-2026
+Last Modified: 03-01-2026
+Overview and Purpose: 
+Notes: 
+*/
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +33,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+
+/*
+register class: 
+*/
 
 public class register extends AppCompatActivity {
 

@@ -1,5 +1,20 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: HomeFragment.java
+Author(s): Riley England, Jackson Yanek, Abdelrahman Zeidan, Manu Redd
+Created: 03-07-2026
+Last Modified: 04-19-2026
+Overview and Purpose: Serves as the main dashboard of the application where users can
+start and end focus sessions, view aggregated focus metrics, and review optimal focus
+conditions based on prior sessions.
+Notes: This fragment integrates session management, data visualization, and user input.
+It interacts with the database to track sessions, computes aggregated focus and quality
+metrics, and displays them using UI elements such as progress bars and text views. It also
+handles pre-session survey input, Bluetooth connection status display, and navigation to
+device connection. The fragment acts as the central hub for user interaction after login.
+*/
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -32,6 +47,12 @@ import androidx.fragment.app.Fragment;
 import java.util.Locale;
 
 import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
+
+/*
+HomeFragment class: A primary UI controller that manages session lifecycle (start/end),
+displays aggregated focus metrics, presents optimal condition recommendations,
+and provides navigation to EEG device connection.
+*/
 
 public class HomeFragment extends Fragment {
 
