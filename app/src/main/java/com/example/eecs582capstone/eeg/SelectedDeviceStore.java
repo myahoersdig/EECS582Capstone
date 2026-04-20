@@ -1,7 +1,5 @@
 package com.example.eecs582capstone.eeg;
 
-import com.neurosdk2.neuro.types.SensorInfo;
-
 /*
 Filename: BrainBitManager.java
 Author(s): Riley England
@@ -12,6 +10,8 @@ accessed across different parts of the application.
 Notes: This class is different from the BrainBitConnectionStore as it keeps the specific device as a static variable, 
 instead of the connection.
 */
+
+import com.neurosdk2.neuro.types.SensorInfo;
 
 /*
 SelectedDeviceStore class: Utility class that maintains a shared static reference to the
