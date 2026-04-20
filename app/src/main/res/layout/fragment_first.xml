@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Filename: fragment_first.xml
+Author(s): Abdelrahman Zeidan, Mya Hoersdig
+Created: Mar 7
+Last Modified:
+Overview and Purpose: Fragment layout used for the app home or first screen. Displays EEG device status, session controls, aggregated history, and optimal focus parameters.
+Notes:
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"

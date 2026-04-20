@@ -1,3 +1,16 @@
+/*
+Filename: dbConnect.java
+Author(s): Abdelrahman Zeidan
+Created: Mar 1
+Last Modified:
+Overview and Purpose: Database helper class that manages SQLite database creation, upgrades, user data, and session data for the application.
+Notes:
+*/
+
+/*
+Class Name: dbConnect
+Description of Class Purpose/Function: This class connects the app to the SQLite database and provides methods for storing, retrieving, updating, and deleting user and session information.
+*/
 package com.example.eecs582capstone;
 
 import android.content.ContentValues;

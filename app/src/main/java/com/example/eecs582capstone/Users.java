@@ -1,3 +1,16 @@
+/*
+Filename: Users.java
+Author(s): Abdelrahman Zeidan
+Created: Mar 1
+Last Modified:
+Overview and Purpose: Model class used to store and manage user account data including id, first name, last name, email, and password.
+Notes:
+*/
+
+/*
+Class Name: Users
+Description of Class Purpose/Function: This class represents a user object and provides getter and setter methods for user-related data.
+*/
 package com.example.eecs582capstone;
 
 public class Users {

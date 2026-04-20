@@ -1,3 +1,16 @@
+/*
+Filename: register.java
+Author(s): Abdelrahman Zeidan
+Created: Feb 24
+Last Modified:
+Overview and Purpose: Activity that handles new user registration by collecting user input, validating fields, confirming matching passwords, and saving the new user to the database.
+Notes:
+*/
+
+/*
+Class Name: register
+Description of Class Purpose/Function: This activity allows a user to create an account and stores the entered registration information in the local database.
+*/
 package com.example.eecs582capstone;
 
 import android.os.Bundle;

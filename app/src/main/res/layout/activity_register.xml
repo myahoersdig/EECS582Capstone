@@ -1,4 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--
+Filename: activity_register.xml
+Author(s): Abdelrahman Zeidan
+Created: Feb 24
+Last Modified:
+Overview and Purpose: XML layout file for the registration screen. Provides input fields for first name, last name, email, password, confirm password, and a register button.
+Notes:
+-->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
