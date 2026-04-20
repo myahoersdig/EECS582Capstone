@@ -1,5 +1,14 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: 
+Author(s): Mya Hoersdig, Abdelrahman Zeidan
+Created: 02-14-2026
+Last Modified: 03-05-2026
+Overview and Purpose: 
+Notes: 
+*/
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +18,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+/*
+Entry class: 
+*/
 public class Entry extends Activity {
     static String TAG = "Look at this"; //you can add this to error catch statements to check in logcat
     EditText edtEmailAddressLog, edtPasswordLog;
