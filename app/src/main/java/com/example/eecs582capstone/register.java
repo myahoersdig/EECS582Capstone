@@ -18,8 +18,8 @@ Filename: register.java
 Author(s): Abdelrahman Zeidan
 Created: 02-24-2026
 Last Modified: 03-01-2026
-Overview and Purpose: 
-Notes: 
+Overview and Purpose: Handles the Register page for Attune
+Notes: Needs to be updated to use cloud authentication eventually
 */
 
 import android.os.Bundle;

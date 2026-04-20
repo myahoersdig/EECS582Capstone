@@ -38,9 +38,11 @@ public class MainActivity extends AppCompatActivity {
         Fragment resultsFragment = new ResultsFragment();
 
         setCurrentFragment(homeFragment);
+        //Start on Home Page
         bottomNavigationView.setSelectedItemId(R.id.home);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
+            // handles the bottomNavigationView within the app. Changes the current fragment accordingly.
             int id = item.getItemId();
 
             if (id == R.id.home) {

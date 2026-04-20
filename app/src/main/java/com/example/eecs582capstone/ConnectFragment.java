@@ -44,10 +44,14 @@ electrodes are properly connected.
 
 public class ConnectFragment extends Fragment {
 
+    //indicators for the electrodes
+
     private View indicatorO1;
     private View indicatorO2;
     private View indicatorT3;
     private View indicatorT4;
+
+    //other ui elements
     private TextView tvConnectStatus;
     private Button btnContinueToHome;
     private BrainBitManager brainBitManager;
@@ -91,10 +95,13 @@ public class ConnectFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
-
+        //brainBitManager from Neuro SDK provided by Brainbit
         brainBitManager = new BrainBitManager(requireContext(), new BrainBitManager.Listener() {
             @Override
             public void onStateChanged(BrainBitManager.ConnectionState state, String message) {
+
+                // when connection state changes, we handle each possible outcome on within the UI
+
                 if (!isAdded()) return;
                 android.util.Log.d("ConnectFragment", "onStateChanged: " + state + " msg=" + message);
 
@@ -195,6 +202,7 @@ public class ConnectFragment extends Fragment {
     }
 
     private ElectrodeStatus signalToStatus(double avgAbsVolts) {
+        // Translate the Avg Abs Volts to the appropriate Electrode status
         if (Double.isNaN(avgAbsVolts) || Double.isInfinite(avgAbsVolts)) {
             return ElectrodeStatus.RED;
         } else if (avgAbsVolts < 1e-7) {
@@ -207,6 +215,7 @@ public class ConnectFragment extends Fragment {
     }
 
     private void setInitialStatus() {
+        //initial values for the Electrodes in the UI
         setIndicatorStatus(indicatorO1, ElectrodeStatus.RED);
         setIndicatorStatus(indicatorO2, ElectrodeStatus.RED);
         setIndicatorStatus(indicatorT3, ElectrodeStatus.RED);
@@ -214,6 +223,8 @@ public class ConnectFragment extends Fragment {
     }
 
     private void setIndicatorStatus(View indicator, ElectrodeStatus status) {
+        //set the Indicator color based ont he ElectrodeStatus object, within the UI
+
         int color;
         switch (status) {
             case GREEN:
@@ -233,6 +244,7 @@ public class ConnectFragment extends Fragment {
 
     private void updateElectrodeIndicators(ElectrodeStatus o1, ElectrodeStatus o2,
                                            ElectrodeStatus t3, ElectrodeStatus t4) {
+        //updates all the Electrode indicators in one go.
         setIndicatorStatus(indicatorO1, o1);
         setIndicatorStatus(indicatorO2, o2);
         setIndicatorStatus(indicatorT3, t3);

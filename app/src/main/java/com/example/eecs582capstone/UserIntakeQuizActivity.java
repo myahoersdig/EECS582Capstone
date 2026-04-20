@@ -57,12 +57,13 @@ public class UserIntakeQuizActivity extends AppCompatActivity {
         if (prefs.getBoolean(KEY_COMPLETED, false)) {
             restoreAnswers(prefs);
         }
-
+        //submit button
         MaterialButton submit = findViewById(R.id.btn_submit);
         submit.setOnClickListener(v -> submitQuiz());
     }
 
     private void restoreAnswers(SharedPreferences prefs) {
+        //If the quiz has been taken before, restory the values.
         setGroup(q1, prefs.getBoolean(KEY_Q1, false));
         setGroup(q2, prefs.getBoolean(KEY_Q2, false));
         setGroup(q3, prefs.getBoolean(KEY_Q3, false));
@@ -85,6 +86,7 @@ public class UserIntakeQuizActivity extends AppCompatActivity {
         }
 
         SharedPreferences.Editor editor = getSharedPreferences(QUIZ_PREFS, MODE_PRIVATE).edit();
+        //puts the answers into the shared preferences
         editor.putBoolean(KEY_COMPLETED, true);
         editor.putBoolean(KEY_Q1, q1.getCheckedRadioButtonId() == R.id.q1_yes);
         editor.putBoolean(KEY_Q2, q2.getCheckedRadioButtonId() == R.id.q2_yes);
@@ -102,10 +104,12 @@ public class UserIntakeQuizActivity extends AppCompatActivity {
 
     // Helper method used by other screens when the user wants to remove the saved survey data
     public static void clearSavedQuiz(Context context) {
+        //clear all answers
         context.getSharedPreferences(QUIZ_PREFS, MODE_PRIVATE).edit().clear().apply();
     }
 
     private boolean allAnswered() {
+        //helper function to make sure all questions were answered.
         return q1.getCheckedRadioButtonId() != -1
                 && q2.getCheckedRadioButtonId() != -1
                 && q3.getCheckedRadioButtonId() != -1

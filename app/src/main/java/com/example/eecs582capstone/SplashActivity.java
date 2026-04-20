@@ -23,6 +23,7 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // On creation of the Activity -> show the splash screen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_screen); //this is located in res > layout > splashscreen
 
