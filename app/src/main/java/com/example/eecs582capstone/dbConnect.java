@@ -1,10 +1,24 @@
 package com.example.eecs582capstone;
 
+/*
+Filename: dbConnect.java
+Author(s): Abdelrahman Zeidan, Mya Hoersdig, Jackson Yanek
+Created: 03-01-2026
+Last Modified: 04-12-2026
+Overview and Purpose: 
+Notes: 
+*/
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+
+/*
+dbConnect class: 
+*/
 
 public class dbConnect extends SQLiteOpenHelper {
 
