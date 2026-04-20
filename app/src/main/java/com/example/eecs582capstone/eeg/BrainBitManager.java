@@ -20,6 +20,25 @@ import com.neurosdk2.neuro.types.SignalChannelsData;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/*
+Filename: BrainBitManager.java
+Author(s): Riley England
+Created: 04-12-2026
+Last Modified: 04-19-2026
+Overview and Purpose: Manages the lifecycle and interaction with the BrainBit EEG device,
+including connecting to the device, handling signal and resistance data, and managing
+communication between the hardware and the application UI.
+Notes: This class acts as the central controller for EEG device operations using the NeuroSDK.
+It uses a background thread (ExecutorService) for device communication and a main thread
+Handler for safely updating UI-related listeners. It supports connection state tracking,
+signal streaming, electrode resistance monitoring, and proper cleanup of resources.
+*/
+
+/*
+BrainBitManager class: A controller class responsible for managing the connection to a BrainBit EEG
+device, handling incoming signal and resistance data, and coordinating communication between
+the NeuroSDK and the application through a listener interface.
+*/
 public class BrainBitManager {
 
     private static final String TAG = "BrainBitManager";
