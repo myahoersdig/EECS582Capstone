@@ -1,16 +1,23 @@
-/*
-SplashAcitivy.java by Mya Hoersdig
-
-initiates the starting animation and then starts the registration page
- */
-
 package com.example.eecs582capstone;
+
+/*
+Filename: SplashActivity.java
+Author(s): Mya Hoersdig
+Created: 02-14-2026
+Last Modified: 03-05-2026
+Overview and Purpose: Initiates the starting animation and then starts the registration page
+Notes:
+*/
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+/*
+SplashActivity class: Creates Splash screen and displays it upon opening app
+*/
 
 public class SplashActivity extends AppCompatActivity {
 
