@@ -1,3 +1,15 @@
+/*
+ * Manu Redd
+ * April 19th
+ * SessionDetailFragment.java
+ *
+ *
+ * This fragment displays the detailed information of a specific user session.
+ * It retrieves session data (such as sleep, mood, metrics, and music preferences)
+ * from the database and allows the user to view, edit, or delete session notes,
+ * as well as delete the session itself.
+ */
+
 package com.example.eecs582capstone;
 
 import android.app.AlertDialog;
@@ -27,6 +39,7 @@ public class SessionDetailFragment extends Fragment {
 
     private static final String ARG_SESSION_ID = "session_id";
 
+    // Creates a new instance of the fragment with the specified session ID.
     public static SessionDetailFragment newInstance(long sessionId) {
         SessionDetailFragment fragment = new SessionDetailFragment();
         Bundle args = new Bundle();
@@ -37,6 +50,7 @@ public class SessionDetailFragment extends Fragment {
 
     private long sessionId;
 
+    // Inflates the layout, initializes UI components, and loads session data from the database.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -136,6 +150,7 @@ public class SessionDetailFragment extends Fragment {
         return view;
     }
 
+    // Displays an AlertDialog with an EditText to allow the user to update session notes.
     private void showEditNoteDialog(dbConnect dbHelper, TextView tvSessionNotes) {
         EditText editText = new EditText(requireContext());
         editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(500)});
@@ -184,6 +199,7 @@ public class SessionDetailFragment extends Fragment {
                 .show();
     }
 
+    // Helper method to extract text from a cursor and return "N/A" if the value is null or empty.
     private String safeText(Cursor cursor, String columnName) {
         String value = cursor.getString(cursor.getColumnIndexOrThrow(columnName));
         return value == null || value.trim().isEmpty() ? "N/A" : value;

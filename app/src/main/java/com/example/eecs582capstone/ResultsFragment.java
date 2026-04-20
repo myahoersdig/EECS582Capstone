@@ -1,3 +1,14 @@
+/*
+ * Manu Redd
+ * April 19th
+ * ResultsFragment.java
+ *
+ * This fragment is responsible for displaying the historical EEG session results to the user.
+ * It provides a calendar view to filter sessions by date, displays aggregated rankings of
+ * optimal/least optimal focus conditions, and allows users to process new EEG data from
+ * demo files. It also includes functionality to delete session data and survey responses.
+ */
+
 package com.example.eecs582capstone;
 
 import android.app.AlertDialog;
@@ -37,6 +48,8 @@ import java.util.Map;
 public class ResultsFragment extends Fragment {
 
     private LinearLayout resultsContainer;
+
+    // Retrieves and displays session results for a specific time range.
     private void displayResultsForDate(long start, long end) {
         int userId = getLoggedInUserId();
         if (userId == -1) return;
@@ -46,6 +59,8 @@ public class ResultsFragment extends Fragment {
 
         displayFromCursor(cursor, true);
     }
+
+    // Fetches all saved sessions for the currently logged-in user and displays them.
     private void displayStoredResults() {
         int userId = getLoggedInUserId();
         if (userId == -1) {
@@ -92,6 +107,7 @@ public class ResultsFragment extends Fragment {
         }
     }
 
+    // Inflates the fragment layout, initializes UI components, sets up listeners, and triggers the initial data load.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -124,6 +140,7 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
+    // Refreshes the displayed results when the fragment becomes active.
     @Override
     public void onResume() {
         super.onResume();
@@ -132,6 +149,7 @@ public class ResultsFragment extends Fragment {
 
     /**
      * Reads saved EEG sessions from SQLite and populates the UI with stored session results.
+     * Processes a database cursor to build aggregate stats, ranked lists, and individual session cards for the UI.
      */
     private void displayFromCursor(Cursor cursor, boolean showEmptyMessage) {
         resultsContainer.removeAllViews();
@@ -221,6 +239,7 @@ public class ResultsFragment extends Fragment {
         }
     }
 
+    // Safely retrieves a string from a database cursor, handling nulls or missing columns by returning "Unknown".
     private String getSafeString(Cursor cursor, String columnName) {
         int index = cursor.getColumnIndex(columnName);
         if (index == -1 || cursor.isNull(index)) {
@@ -235,6 +254,7 @@ public class ResultsFragment extends Fragment {
         return value.trim();
     }
 
+    // Categorizes a BPM value into "Slow", "Moderate", or "Fast" buckets.
     private String getTempoBucket(int tempo) {
         if (tempo <= 0) return "Unknown";
         if (tempo < 80) return "Slow";
@@ -242,6 +262,7 @@ public class ResultsFragment extends Fragment {
         return "Fast";
     }
 
+    // Categorizes a timestamp into "Morning", "Afternoon", "Evening", or "Night" buckets.
     private String getTimeOfDayBucket(long startTimeMillis) {
         java.util.Calendar calendar = java.util.Calendar.getInstance();
         calendar.setTimeInMillis(startTimeMillis);
@@ -253,6 +274,7 @@ public class ResultsFragment extends Fragment {
         return "Night";
     }
 
+    // Converts aggregated session data into a sorted list of ranked conditions based on focus stability.
     private List<RankedCondition> buildRankedConditions(Map<String, ConditionAggregate> aggregateMap) {
         List<RankedCondition> ranked = new ArrayList<>();
 
@@ -268,7 +290,7 @@ public class ResultsFragment extends Fragment {
         return ranked;
     }
 
-    // should make xml for this and connect it - riley
+    // Adds the "Top 3 Most Optimal" and "Top 3 Least Optimal" condition sections to the scrollable container.
     private void addRankingSectionsToUi(LayoutInflater inflater, List<RankedCondition> rankedConditions) {
         if (rankedConditions.isEmpty()) {
             return;
@@ -297,6 +319,7 @@ public class ResultsFragment extends Fragment {
         }
     }
 
+    // Creates a single card view representing a ranked focus condition.
     private View createRankingCard(LayoutInflater inflater, int rank, RankedCondition ranked, boolean optimal) {
         View card = inflater.inflate(android.R.layout.simple_list_item_2, resultsContainer, false);
 
@@ -313,6 +336,7 @@ public class ResultsFragment extends Fragment {
         return card;
     }
 
+    // Simulates the processing of raw EEG data by reading from a JSON asset and saving the analysis results to the database.
     private void processEegData() {
         try {
             int userId = getLoggedInUserId();
@@ -389,9 +413,7 @@ public class ResultsFragment extends Fragment {
         }
     }
 
-    /**
-     * Helper to add a session result view to the container.
-     */
+    // Adds a single session result item to the results container and sets up its click listener.
     private void addResultToUi(LayoutInflater inflater, long dbSessionId, String label, int varianceScore, int qualityScore) {
         View sessionView = inflater.inflate(R.layout.item_session_result, resultsContainer, false);
         ((TextView) sessionView.findViewById(R.id.tvSessionLabel)).setText(label);
@@ -411,6 +433,7 @@ public class ResultsFragment extends Fragment {
         resultsContainer.addView(sessionView);
     }
 
+    // Shows a confirmation dialog before deleting all EEG data for the user.
     private void confirmDeleteAllEegData() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete All EEG Data")
@@ -420,6 +443,7 @@ public class ResultsFragment extends Fragment {
                 .show();
     }
 
+    // Deletes all session records associated with the current user from the database.
     private void deleteAllEegData() {
         int userId = getLoggedInUserId();
         if (userId == -1) {
@@ -433,6 +457,7 @@ public class ResultsFragment extends Fragment {
         Toast.makeText(getContext(), "All saved EEG data deleted.", Toast.LENGTH_SHORT).show();
     }
 
+    // Shows a confirmation dialog before clearing the user's saved intake survey data.
     private void confirmDeleteSurveyData() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Saved Survey Data")
@@ -442,11 +467,13 @@ public class ResultsFragment extends Fragment {
                 .show();
     }
 
+    // Clears the saved intake survey data from SharedPreferences.
     private void deleteSurveyData() {
         UserIntakeQuizActivity.clearSavedQuiz(requireContext());
         Toast.makeText(getContext(), "Saved survey data deleted.", Toast.LENGTH_SHORT).show();
     }
 
+    // Retrieves the ID of the currently logged-in user from SharedPreferences and the database.
     private int getLoggedInUserId() {
         SharedPreferences prefs = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE);
         String email = prefs.getString("email", null);
@@ -460,6 +487,7 @@ public class ResultsFragment extends Fragment {
         return user != null ? user.getId() : -1;
     }
 
+    // Maps a raw variance value to a 1-10 focus stability score.
     private int mapVarianceTo1to10(double variance) {
         double maxVariance = 0.01;
         double minVariance = 0.0001;
@@ -468,6 +496,7 @@ public class ResultsFragment extends Fragment {
         return (int) Math.round((1.0 - (variance - minVariance) / (maxVariance - minVariance)) * 9) + 1;
     }
 
+    // Computes the statistical variance of a list of numerical values.
     private double calculateVariance(List<Double> values) {
         if (values.size() < 2) return 0.0;
         double sum = 0;

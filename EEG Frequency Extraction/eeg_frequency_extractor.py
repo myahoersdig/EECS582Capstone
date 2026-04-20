@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+April 13th
+Manu Redd
+
 Extract brainwave frequency measurements from a CSV EEG recording.
 
 Expected input columns:
@@ -36,6 +39,7 @@ BANDS: Dict[str, Tuple[float, float]] = {
 
 
 def estimate_fs(df: pd.DataFrame) -> float:
+    # Estimates the sampling frequency from the dataframe.
     """Estimate sample rate from t_sec if present, else pack_num."""
     if "t_sec" in df.columns:
         t = pd.to_numeric(df["t_sec"], errors="coerce").to_numpy()
@@ -55,6 +59,7 @@ def estimate_fs(df: pd.DataFrame) -> float:
 
 
 def get_channel_columns(df: pd.DataFrame) -> List[str]:
+    # Identifies the columns containing EEG signal data.
     numeric_cols = []
     for col in df.columns:
         if col.lower() in {"t_sec", "pack_num", "marker"}:
@@ -68,6 +73,7 @@ def get_channel_columns(df: pd.DataFrame) -> List[str]:
 
 
 def bandpass_filter(signal: np.ndarray, fs: float, low: float = 1.0, high: float = 45.0, order: int = 4) -> np.ndarray:
+    # Applies a Butterworth bandpass filter to the signal.
     nyq = 0.5 * fs
     low_n = max(low / nyq, 1e-6)
     high_n = min(high / nyq, 0.999999)
@@ -79,6 +85,7 @@ def bandpass_filter(signal: np.ndarray, fs: float, low: float = 1.0, high: float
 
 
 def compute_psd(signal: np.ndarray, fs: float) -> Tuple[np.ndarray, np.ndarray]:
+    # Calculates the Power Spectral Density of the signal.
     nperseg = int(min(len(signal), max(256, round(fs * 4))))
     if nperseg < 32:
         raise ValueError("Signal is too short for PSD estimation.")
@@ -88,6 +95,7 @@ def compute_psd(signal: np.ndarray, fs: float) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def bandpower(freqs: np.ndarray, psd: np.ndarray, band: Tuple[float, float]) -> float:
+    # Computes the power within a specific frequency band.
     lo, hi = band
     mask = (freqs >= lo) & (freqs < hi)
     if mask.sum() < 2:
@@ -97,6 +105,7 @@ def bandpower(freqs: np.ndarray, psd: np.ndarray, band: Tuple[float, float]) -> 
 
 
 def summarize_channel(raw_signal: np.ndarray, fs: float) -> Dict[str, float]:
+    # Generates a summary of brainwave metrics for a single channel.
     signal = np.asarray(raw_signal, dtype=float)
     signal = signal[np.isfinite(signal)]
     if len(signal) < max(64, int(fs * 2)):
@@ -130,6 +139,7 @@ def summarize_channel(raw_signal: np.ndarray, fs: float) -> Dict[str, float]:
 
 
 def rolling_dominant_frequency(raw_signal: np.ndarray, fs: float, window_sec: float, step_sec: float) -> pd.DataFrame:
+    # Calculates dominant frequency over a sliding window.
     x = np.asarray(raw_signal, dtype=float)
     x = np.nan_to_num(x - np.nanmean(x), nan=0.0)
     x = bandpass_filter(x, fs, low=1.0, high=45.0)
@@ -157,6 +167,7 @@ def rolling_dominant_frequency(raw_signal: np.ndarray, fs: float, window_sec: fl
 
 
 def main() -> None:
+    # Main entry point for the EEG frequency extraction script.
     parser = argparse.ArgumentParser(description="Extract brainwave frequency measurements from EEG CSV data.")
     parser.add_argument("csv_path", type=Path, help="Path to EEG CSV file")
     parser.add_argument("--fs", type=float, default=None, help="Sampling rate in Hz (default: estimate from t_sec)")
