@@ -159,7 +159,9 @@ public class HomeFragment extends Fragment {
     }
 
     private void calculateAndDisplayAggregatedData() {
+        // This is for the aggregated data display in Attune
         if (currentUserId == -1) {
+            //not logged in
             layoutAggregatedResults.setVisibility(View.GONE);
             return;
         }
@@ -171,13 +173,14 @@ public class HomeFragment extends Fragment {
                 layoutAggregatedResults.setVisibility(View.GONE);
                 return;
             }
-
+            //init metrics
             double totalWeightedVariance = 0;
             double totalWeightedQuality = 0;
             double totalQualityWeight = 0;
             int count = 0;
 
             do {
+                //pull the metrics from the database.
                 int variance = cursor.getInt(cursor.getColumnIndexOrThrow("variance_score"));
                 int quality = cursor.getInt(cursor.getColumnIndexOrThrow("quality_score"));
 
@@ -188,7 +191,7 @@ public class HomeFragment extends Fragment {
                 totalQualityWeight += weight;
                 count++;
             } while (cursor.moveToNext());
-
+            // floats for the aggregated metrics
             double aggFocus = totalQualityWeight > 0 ? totalWeightedVariance / totalQualityWeight : 0;
             double aggQuality = count > 0 ? totalWeightedQuality / count : 0;
 
@@ -244,6 +247,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void showPreSessionSurvey() {
+        // This shows the pre session survey to the user.
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_pre_session_survey, null);

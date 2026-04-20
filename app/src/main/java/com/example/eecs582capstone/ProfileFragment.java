@@ -73,6 +73,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadImage() {
+        //load the image for the profile picture
         File file = new File(requireContext().getFilesDir(), "profile.jpg");
         if (file.exists()) {
             profileImage.setImageURI(Uri.fromFile(file));
@@ -146,7 +147,7 @@ public class ProfileFragment extends Fragment {
             intent.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
             startActivity(intent);
         });
-
+        // This is for the intake quiz summary below the profile summary.
         quizSummaryCard = view.findViewById(R.id.quizSummaryCard);
         quizQ1 = view.findViewById(R.id.quiz_q1);
         quizQ2 = view.findViewById(R.id.quiz_q2);
@@ -180,6 +181,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadQuizSummary() {
+        //gets the shared preference for the intake quiz and checks whether it has been completed.
+        // If not, it does not display the summary
         SharedPreferences prefs = getActivity().getSharedPreferences("intake_quiz", Context.MODE_PRIVATE);
 
         if (!prefs.getBoolean("completed", false)) {

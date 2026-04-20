@@ -34,6 +34,7 @@ dbConnect class:
 */
 
 public class dbConnect extends SQLiteOpenHelper {
+    //Temp: needs to be translated into a cloud database for authentication.
 
     private static final String DB_NAME = "appName";
     private static final int DB_VERSION = 5;   // Incremented to trigger onUpgrade
