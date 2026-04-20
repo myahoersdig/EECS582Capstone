@@ -1,10 +1,14 @@
-/*
-SecondFragment.java by Mya Hoersdig
-
-initializes the second fragment (profile)
- */
-
 package com.example.eecs582capstone;
+
+
+/*
+Filename: ProfileFragment.java (previously SecondFragment.java)
+Author(s): Mya Hoersdig, Jackson Yanek
+Created: 03-05-2026
+Last Modified: 04-12-2026
+Overview and Purpose: Initializes the second fragment (profile)
+Notes: 
+*/
 
 import android.Manifest;
 import android.content.Context;
@@ -33,6 +37,11 @@ import com.google.android.material.card.MaterialCardView;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+
+
+/*
+ProfileFragment class: 
+*/
 
 public class ProfileFragment extends Fragment {
 
