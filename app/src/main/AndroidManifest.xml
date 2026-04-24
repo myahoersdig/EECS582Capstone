@@ -32,6 +32,8 @@ our manifest where we declare all permissions that are needed for this app to ru
         <activity
             android:name=".register"
             android:exported="false" />
+        <activity android:name=".OnboardingActivity"
+            android:exported="false"/>
         <activity
             android:name=".SplashActivity"
             android:exported="true"

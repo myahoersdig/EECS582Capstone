@@ -38,7 +38,6 @@ public class Entry extends Activity {
         btnLogin = findViewById(R.id.btnLoginLog);
         btnRegisterLog = findViewById(R.id.btnRegisterLog);
 
-
         btnRegisterLog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -72,8 +71,21 @@ public class Entry extends Activity {
                     editor.putBoolean("logged_in", true);
                     editor.apply();
 
-                    Intent intent = new Intent(Entry.this, MainActivity.class);
-                    startActivity(intent); //Start main activity
+                    SharedPreferences onboardingPrefs = getSharedPreferences(OnboardingActivity.PREFS_NAME, MODE_PRIVATE);
+                    boolean hasSeenOnboarding = onboardingPrefs.getBoolean(
+                            OnboardingActivity.getOnboardingKey(email),
+                            false
+                    );
+
+                    Intent intent;
+                    if (hasSeenOnboarding) {
+                        intent = new Intent(Entry.this, MainActivity.class);
+                    } else {
+                        intent = new Intent(Entry.this, OnboardingActivity.class);
+                        intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+                    }
+
+                    startActivity(intent); //Start onboarding or main activity
                     finish();
                 } else {
                     //Wrong email/password
@@ -86,7 +98,22 @@ public class Entry extends Activity {
         SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
         boolean loggedIn = prefs.getBoolean("logged_in", false);
         if (loggedIn) {
-            Intent intent = new Intent(Entry.this, MainActivity.class);
+            String email = prefs.getString("email", "");
+
+            SharedPreferences onboardingPrefs = getSharedPreferences(OnboardingActivity.PREFS_NAME, MODE_PRIVATE);
+            boolean hasSeenOnboarding = onboardingPrefs.getBoolean(
+                    OnboardingActivity.getOnboardingKey(email),
+                    false
+            );
+
+            Intent intent;
+            if (hasSeenOnboarding) {
+                intent = new Intent(Entry.this, MainActivity.class);
+            } else {
+                intent = new Intent(Entry.this, OnboardingActivity.class);
+                intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+            }
+
             startActivity(intent);
             finish();
         }

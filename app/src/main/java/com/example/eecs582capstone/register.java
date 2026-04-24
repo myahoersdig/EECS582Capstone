@@ -1,16 +1,3 @@
-/*
-Filename: register.java
-Author(s): Abdelrahman Zeidan
-Created: Feb 24
-Last Modified:
-Overview and Purpose: Activity that handles new user registration by collecting user input, validating fields, confirming matching passwords, and saving the new user to the database.
-Notes:
-*/
-
-/*
-Class Name: register
-Description of Class Purpose/Function: This activity allows a user to create an account and stores the entered registration information in the local database.
-*/
 package com.example.eecs582capstone;
 
 /*
@@ -22,6 +9,8 @@ Overview and Purpose: Handles the Register page for Attune
 Notes: Needs to be updated to use cloud authentication eventually
 */
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -36,7 +25,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 
 /*
-register class: 
+register class:
 */
 
 public class register extends AppCompatActivity {
@@ -91,8 +80,18 @@ public class register extends AppCompatActivity {
                 Users newUser = new Users(0, firstName, lastName, email, password); // id is auto-generated
                 dbHelper.addUser(newUser);
 
+                SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("email", email);
+                editor.putBoolean("logged_in", true);
+                editor.apply();
+
                 Toast.makeText(register.this, "Registration successful", Toast.LENGTH_SHORT).show();
-                finish(); // Return to login screen
+
+                Intent intent = new Intent(register.this, OnboardingActivity.class);
+                intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+                startActivity(intent);
+                finish(); // Move to onboarding screen
             }
         });
     }
