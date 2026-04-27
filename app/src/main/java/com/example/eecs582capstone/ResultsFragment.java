@@ -5,8 +5,9 @@
  *
  * This fragment is responsible for displaying the historical EEG session results to the user.
  * It provides a calendar view to filter sessions by date, displays aggregated rankings of
- * optimal/least optimal focus conditions, and allows users to process new EEG data from
- * demo files. It also includes functionality to delete session data and survey responses.
+ * optimal/least optimal focus conditions, and allows users to process completed recorded
+ * EEG sessions that still need analysis. It also includes functionality to delete session
+ * data and survey responses.
  */
 
 package com.example.eecs582capstone;
@@ -31,18 +32,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.example.eecs582capstone.eeg.RecordedSessionAnalyzer;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 
 public class ResultsFragment extends Fragment {
@@ -336,7 +334,7 @@ public class ResultsFragment extends Fragment {
         return card;
     }
 
-    // Simulates the processing of raw EEG data by reading from a JSON asset and saving the analysis results to the database.
+    // Processes one completed recorded EEG session that is still waiting for analysis.
     private void processEegData() {
         try {
             int userId = getLoggedInUserId();
@@ -354,56 +352,29 @@ public class ResultsFragment extends Fragment {
                 return;
             }
 
-            InputStream is = requireContext().getAssets().open("demo_sessions.json");
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            String jsonString = new String(buffer, StandardCharsets.UTF_8);
-
-            JSONObject data = new JSONObject(jsonString);
-            JSONArray sessions = data.getJSONArray("sessions");
-
-            // Pick one demo EEG session based on how many processed sessions already exist.
-            // This keeps the demo data rotating instead of always using the same sample.
-            int processedCount = dbHelper.getProcessedSessionCount(userId);
-            int sessionIndex = processedCount % sessions.length();
-
-            JSONObject session = sessions.getJSONObject(sessionIndex);
-            JSONArray samples = session.getJSONArray("samples");
-
-            double sumQ = 0;
-            int countQ = 0;
-            List<Double> validV = new ArrayList<>();
-            for (int j = 0; j < samples.length(); j++) {
-                JSONObject sample = samples.getJSONObject(j);
-                if (sample.has("q") && !sample.isNull("q")) {
-                    sumQ += sample.getDouble("q");
-                    countQ++;
-                }
-                if (sample.has("v") && !sample.isNull("v")) {
-                    validV.add(sample.getDouble("v"));
-                }
+            String recordingPath = dbHelper.getSessionRecordingPath(sessionId);
+            if (recordingPath == null || recordingPath.trim().isEmpty()) {
+                Toast.makeText(getContext(), "That session does not have a recorded EEG file to process.", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            double avgQ = countQ > 0 ? sumQ / countQ : 0.0;
-            double completionRate = (double) validV.size() / samples.length();
-            int qualityScore = (int) Math.round(avgQ * completionRate * 9) + 1;
-            int varianceScore = mapVarianceTo1to10(calculateVariance(validV));
+            RecordedSessionAnalyzer.SessionScores scores =
+                    RecordedSessionAnalyzer.analyze(new File(recordingPath));
 
+            int processedCount = dbHelper.getProcessedSessionCount(userId);
             String label = "Reading " + (processedCount + 1);
 
             // Save EEG analysis into the already existing completed session row
             boolean updated = dbHelper.saveProcessedResultsToExistingSession(
                     sessionId,
                     label,
-                    varianceScore,
-                    qualityScore
+                    scores.focusScore,
+                    scores.qualityScore
             );
 
             if (updated) {
                 displayStoredResults();
-                Toast.makeText(getContext(), "EEG data saved successfully.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Recorded EEG session processed successfully.", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "Failed to save EEG data.", Toast.LENGTH_SHORT).show();
             }
@@ -417,7 +388,7 @@ public class ResultsFragment extends Fragment {
     private void addResultToUi(LayoutInflater inflater, long dbSessionId, String label, int varianceScore, int qualityScore) {
         View sessionView = inflater.inflate(R.layout.item_session_result, resultsContainer, false);
         ((TextView) sessionView.findViewById(R.id.tvSessionLabel)).setText(label);
-        ((TextView) sessionView.findViewById(R.id.tvVarianceText)).setText(String.format(Locale.US, "Variance Score: %d/10", varianceScore));
+        ((TextView) sessionView.findViewById(R.id.tvVarianceText)).setText(String.format(Locale.US, "Focus Score: %d/10", varianceScore));
         ((ProgressBar) sessionView.findViewById(R.id.pbVariance)).setProgress(varianceScore);
         ((TextView) sessionView.findViewById(R.id.tvQualityText)).setText(String.format(Locale.US, "Quality Score: %d/10", qualityScore));
         ((ProgressBar) sessionView.findViewById(R.id.pbQuality)).setProgress(qualityScore);
@@ -487,23 +458,4 @@ public class ResultsFragment extends Fragment {
         return user != null ? user.getId() : -1;
     }
 
-    // Maps a raw variance value to a 1-10 focus stability score.
-    private int mapVarianceTo1to10(double variance) {
-        double maxVariance = 0.01;
-        double minVariance = 0.0001;
-        if (variance <= minVariance) return 10;
-        if (variance >= maxVariance) return 1;
-        return (int) Math.round((1.0 - (variance - minVariance) / (maxVariance - minVariance)) * 9) + 1;
-    }
-
-    // Computes the statistical variance of a list of numerical values.
-    private double calculateVariance(List<Double> values) {
-        if (values.size() < 2) return 0.0;
-        double sum = 0;
-        for (double v : values) sum += v;
-        double mean = sum / values.size();
-        double temp = 0;
-        for (double v : values) temp += (v - mean) * (v - mean);
-        return temp / (values.size() - 1);
-    }
 }

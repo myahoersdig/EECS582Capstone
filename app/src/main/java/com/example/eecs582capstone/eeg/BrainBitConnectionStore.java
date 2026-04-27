@@ -32,6 +32,10 @@ public class BrainBitConnectionStore {
         return manager != null;
     }
 
+    public static boolean isConnected() {
+        return manager != null && manager.isConnected();
+    }
+
     public static void clear() {
         manager = null;
     }

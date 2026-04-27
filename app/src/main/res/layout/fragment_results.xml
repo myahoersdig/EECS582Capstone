@@ -11,7 +11,7 @@
         android:id="@+id/btnReadData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Read Data" />
+        android:text="Process Pending EEG Session" />
 
     <CalendarView
         android:id="@+id/calendarView"

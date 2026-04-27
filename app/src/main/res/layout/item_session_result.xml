@@ -16,12 +16,12 @@
         android:textSize="18sp"
         android:layout_marginBottom="8dp"/>
 
-    <!-- Variance Score -->
+    <!-- Focus Score -->
     <TextView
         android:id="@+id/tvVarianceText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Variance Score: 0/10"
+        android:text="Focus Score: 0/10"
         android:textSize="14sp"/>
 
     <ProgressBar

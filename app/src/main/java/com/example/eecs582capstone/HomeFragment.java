@@ -44,10 +44,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import java.io.File;
 import java.util.Locale;
 
 import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
 import com.example.eecs582capstone.eeg.BrainBitRecorder;
+import com.example.eecs582capstone.eeg.RecordedSessionAnalyzer;
 
 /*
 HomeFragment class: A primary UI controller that manages session lifecycle (start/end),
@@ -338,6 +340,10 @@ public class HomeFragment extends Fragment {
                             BrainBitRecorder recorder = new BrainBitRecorder();
                             if (recorder.start(requireContext(), sessionId)) {
                                 activeRecorder = recorder;
+                                File outputFile = recorder.getOutputFile();
+                                if (outputFile != null) {
+                                    dbHelper.updateSessionRecordingPath(sessionId, outputFile.getAbsolutePath());
+                                }
                                 BrainBitConnectionStore.getManager().setRecorder(recorder);
                                 Toast.makeText(getActivity(), "Session started! EEG recording active.", Toast.LENGTH_SHORT).show();
                             } else {
@@ -379,11 +385,15 @@ public class HomeFragment extends Fragment {
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
         } else {
-        boolean active = dbHelper.hasActiveSession(currentUserId);
+            boolean active = dbHelper.hasActiveSession(currentUserId);
             if (active) {
                 sessionStatus.setText("Session in progress");
                 btnStartSession.setEnabled(false);
                 btnEndSession.setEnabled(true);
+            } else if (!BrainBitConnectionStore.isConnected()) {
+                sessionStatus.setText("Connect your BrainBit device before starting a session.");
+                btnStartSession.setEnabled(false);
+                btnEndSession.setEnabled(false);
             } else {
                 sessionStatus.setText("No active session");
                 btnStartSession.setEnabled(true);
@@ -394,7 +404,7 @@ public class HomeFragment extends Fragment {
 
     // could probably just add this into session UI
     private void updateBluetoothStatusUI() {
-        boolean connected = BrainBitConnectionStore.hasManager();
+        boolean connected = BrainBitConnectionStore.isConnected();
 
         if (connected) {
             tvBtStatus.setText("Connected");
@@ -429,96 +439,47 @@ public class HomeFragment extends Fragment {
     // helper functions for session results
 
     private boolean processCompletedSession(long sessionId, BrainBitRecorder recorder) {
-        if (recorder != null && recorder.hasData()) {
-            int varianceScore = recorder.computeVarianceScore();
-            int qualityScore = recorder.computeQualityScore();
-            int processedCount = dbHelper.getProcessedSessionCount(currentUserId);
-            String label = "Reading " + (processedCount + 1);
-            return dbHelper.saveProcessedResultsToExistingSession(sessionId, label, varianceScore, qualityScore);
+        File recordingFile = getRecordingFile(sessionId, recorder);
+        if (recordingFile != null) {
+            try {
+                RecordedSessionAnalyzer.SessionScores scores = RecordedSessionAnalyzer.analyze(recordingFile);
+                int processedCount = dbHelper.getProcessedSessionCount(currentUserId);
+                String label = "Reading " + (processedCount + 1);
+                return dbHelper.saveProcessedResultsToExistingSession(
+                        sessionId,
+                        label,
+                        scores.focusScore,
+                        scores.qualityScore
+                );
+            } catch (Exception e) {
+                android.util.Log.e("HomeFragment", "Recorded EEG analysis failed", e);
+            }
         }
 
-        // No real recording — fall back to demo data
-        try {
-            java.io.InputStream is = requireContext().getAssets().open("demo_sessions.json");
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-
-            String jsonString = new String(buffer, java.nio.charset.StandardCharsets.UTF_8);
-            org.json.JSONObject data = new org.json.JSONObject(jsonString);
-            org.json.JSONArray sessions = data.getJSONArray("sessions");
-
+        if (recorder != null && recorder.hasData()) {
             int processedCount = dbHelper.getProcessedSessionCount(currentUserId);
-            int sessionIndex = processedCount % sessions.length();
-
-            org.json.JSONObject session = sessions.getJSONObject(sessionIndex);
-            org.json.JSONArray samples = session.getJSONArray("samples");
-
-            double sumQ = 0;
-            int countQ = 0;
-            java.util.List<Double> validV = new java.util.ArrayList<>();
-
-            for (int j = 0; j < samples.length(); j++) {
-                org.json.JSONObject sample = samples.getJSONObject(j);
-
-                if (sample.has("q") && !sample.isNull("q")) {
-                    sumQ += sample.getDouble("q");
-                    countQ++;
-                }
-
-                if (sample.has("v") && !sample.isNull("v")) {
-                    validV.add(sample.getDouble("v"));
-                }
-            }
-
-            double avgQ = countQ > 0 ? sumQ / countQ : 0.0;
-            double completionRate = (double) validV.size() / samples.length();
-
-            int qualityScore = (int) Math.round(avgQ * completionRate * 9) + 1;
-            int varianceScore = mapVarianceTo1to10(calculateVariance(validV));
-
             String label = "Reading " + (processedCount + 1);
-
             return dbHelper.saveProcessedResultsToExistingSession(
                     sessionId,
                     label,
-                    varianceScore,
-                    qualityScore
+                    recorder.computeVarianceScore(),
+                    recorder.computeQualityScore()
             );
-
-        } catch (Exception e) {
-            Toast.makeText(getActivity(), "Processing error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
         }
+
+        return false;
     }
 
-    private int mapVarianceTo1to10(double variance) {
-        double maxVariance = 0.01;
-        double minVariance = 0.0001;
-
-        if (variance <= minVariance) return 10;
-        if (variance >= maxVariance) return 1;
-
-        return (int) Math.round((1.0 - (variance - minVariance) / (maxVariance - minVariance)) * 9) + 1;
-    }
-
-    private double calculateVariance(java.util.List<Double> values) {
-        if (values.size() < 2) return 0.0;
-
-        double sum = 0;
-        for (double v : values) {
-            sum += v;
+    private File getRecordingFile(long sessionId, BrainBitRecorder recorder) {
+        if (recorder != null && recorder.getOutputFile() != null) {
+            return recorder.getOutputFile();
         }
 
-        double mean = sum / values.size();
-
-        double temp = 0;
-        for (double v : values) {
-            temp += (v - mean) * (v - mean);
+        String recordingPath = dbHelper.getSessionRecordingPath(sessionId);
+        if (recordingPath == null || recordingPath.trim().isEmpty()) {
+            return null;
         }
-
-        return temp / (values.size() - 1);
+        return new File(recordingPath);
     }
 
     @Override

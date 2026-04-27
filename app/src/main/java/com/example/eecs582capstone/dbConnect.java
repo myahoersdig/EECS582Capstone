@@ -37,7 +37,7 @@ public class dbConnect extends SQLiteOpenHelper {
     //Temp: needs to be translated into a cloud database for authentication.
 
     private static final String DB_NAME = "appName";
-    private static final int DB_VERSION = 7;
+    private static final int DB_VERSION = 8;
 
     // Users table
     private static final String TABLE_USERS = "users";
@@ -70,6 +70,7 @@ public class dbConnect extends SQLiteOpenHelper {
     private static final String COL_GENRE = "music_genre";
     private static final String COL_LYRICS = "lyrics_preference";
     private static final String COL_TEMPO = "tempo_bpm";
+    private static final String COL_RECORDING_PATH = "recording_path";
 
     // Optional session notes
     private static final String COL_NOTES = "session_notes";
@@ -131,6 +132,7 @@ public class dbConnect extends SQLiteOpenHelper {
                 + COL_Q7 + " TEXT, "
                 + COL_Q8 + " TEXT, "
                 + COL_NOTES + " TEXT, "
+                + COL_RECORDING_PATH + " TEXT, "
                 + "FOREIGN KEY(" + COL_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_ID + "))";
         db.execSQL(createSessionTable);
     }
@@ -178,6 +180,9 @@ public class dbConnect extends SQLiteOpenHelper {
         if (oldVersion < 5) {
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_NOTES, "TEXT");
         }
+        if (oldVersion < 8) {
+            addColumnIfNeeded(db, TABLE_SESSIONS, COL_RECORDING_PATH, "TEXT");
+        }
         // Version 7: ensure users table exists (may be missing on devices with corrupt v6 DB)
         if (oldVersion < 7) {
             db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_USERS + " ("
@@ -215,6 +220,7 @@ public class dbConnect extends SQLiteOpenHelper {
                     + COL_Q7 + " TEXT, "
                     + COL_Q8 + " TEXT, "
                     + COL_NOTES + " TEXT, "
+                    + COL_RECORDING_PATH + " TEXT, "
                     + "FOREIGN KEY(" + COL_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_ID + "))");
         }
     }
@@ -354,6 +360,19 @@ public class dbConnect extends SQLiteOpenHelper {
         return rows > 0;
     }
 
+    public boolean updateSessionRecordingPath(long sessionId, String recordingPath) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        if (recordingPath == null || recordingPath.trim().isEmpty()) {
+            values.putNull(COL_RECORDING_PATH);
+        } else {
+            values.put(COL_RECORDING_PATH, recordingPath.trim());
+        }
+        int rows = db.update(TABLE_SESSIONS, values, COL_SESSION_ID + " = ?", new String[]{String.valueOf(sessionId)});
+        db.close();
+        return rows > 0;
+    }
+
     public void endSession(long sessionId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -430,6 +449,23 @@ public class dbConnect extends SQLiteOpenHelper {
         int rows = db.update(TABLE_SESSIONS, values, COL_SESSION_ID + " = ?", new String[]{String.valueOf(sessionId)});
         db.close();
         return rows > 0;
+    }
+
+    public String getSessionRecordingPath(long sessionId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(
+                "SELECT " + COL_RECORDING_PATH + " FROM " + TABLE_SESSIONS +
+                        " WHERE " + COL_SESSION_ID + " = ?",
+                new String[]{String.valueOf(sessionId)}
+        );
+
+        String recordingPath = null;
+        if (cursor.moveToFirst() && !cursor.isNull(0)) {
+            recordingPath = cursor.getString(0);
+        }
+        cursor.close();
+        db.close();
+        return recordingPath;
     }
 
     // Returns all saved EEG sessions for one user, newest first

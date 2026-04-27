@@ -75,6 +75,10 @@ public class BrainBitManager {
         this.recorder = recorder;
     }
 
+    public boolean isConnected() {
+        return connectionState == ConnectionState.CONNECTED;
+    }
+
 
 
     private final BrainBit2SignalDataReceived signalCallback = new BrainBit2SignalDataReceived() {

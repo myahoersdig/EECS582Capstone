@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class BrainBitRecorder {
 
@@ -107,14 +108,23 @@ public class BrainBitRecorder {
     // Called on main thread.
     public void stop() {
         active = false;
-        fileExecutor.execute(() -> {
+        try {
+            fileExecutor.submit(() -> {
+                if (writer != null) {
+                    writer.flush();
+                    writer.close();
+                    writer = null;
+                }
+                Log.d(TAG, "Recording stopped. samples=" + sampleCount + " file=" + outputFile);
+            }).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            Log.e(TAG, "Timed out while closing recording file", e);
             if (writer != null) {
                 writer.flush();
                 writer.close();
                 writer = null;
             }
-            Log.d(TAG, "Recording stopped. samples=" + sampleCount + " file=" + outputFile);
-        });
+        }
     }
 
     public boolean hasData() {
