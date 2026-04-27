@@ -3,9 +3,9 @@ package com.example.eecs582capstone;
 
 /*
 Filename: ProfileFragment.java (previously SecondFragment.java)
-Author(s): Mya Hoersdig, Jackson Yanek
+Author(s): Mya Hoersdig, Jackson Yanek, Riley England
 Created: 03-05-2026
-Last Modified: 04-12-2026
+Last Modified: 04-26-2026
 Overview and Purpose: Initializes the second fragment (profile)
 Notes: 
 */
@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -138,6 +139,22 @@ public class ProfileFragment extends Fragment {
         intakeQuizButton.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), UserIntakeQuizActivity.class);
             startActivity(intent);
+        });
+        // For consent buttons
+        Button btnReviewConsent = view.findViewById(R.id.btnReviewConsent);
+        Button btnRevokeConsent = view.findViewById(R.id.btnRevokeConsent);
+
+        btnReviewConsent.setOnClickListener(v -> {
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flFragment, new ConsentFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        btnRevokeConsent.setOnClickListener(v -> {
+            ConsentManager.setConsent(requireContext(), false);
+            Toast.makeText(requireContext(), "EEG consent revoked.", Toast.LENGTH_SHORT).show();
         });
 
         tvNotificationStatus = view.findViewById(R.id.tvNotificationStatus);

@@ -4,7 +4,7 @@ package com.example.eecs582capstone;
 Filename: ConnectFragment.java
 Author(s): Riley England
 Created: 04-11-2026
-Last Modified: 04-19-2026
+Last Modified: 04-26-2026
 Overview and Purpose: Handles the UI and logic for connecting to a selected EEG device,
 monitoring signal quality from electrodes, and guiding the user through the connection
 process before proceeding to the main application.
@@ -72,6 +72,18 @@ public class ConnectFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View root = inflater.inflate(R.layout.fragment_connect, container, false);
+
+        if (!ConsentManager.hasConsent(requireContext())) {
+            Toast.makeText(requireContext(), "EEG consent is required before connecting.", Toast.LENGTH_SHORT).show();
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flFragment, new ConsentFragment())
+                    .addToBackStack(null)
+                    .commit();
+
+            return root;
+        }
 
         indicatorO1 = root.findViewById(R.id.indicatorO1);
         indicatorO2 = root.findViewById(R.id.indicatorO2);
