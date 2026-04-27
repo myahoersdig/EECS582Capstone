@@ -4,7 +4,7 @@ package com.example.eecs582capstone;
 Filename: HomeFragment.java
 Author(s): Riley England, Jackson Yanek, Abdelrahman Zeidan, Manu Redd
 Created: 03-07-2026
-Last Modified: 04-19-2026
+Last Modified: 04-26-2026
 Overview and Purpose: Serves as the main dashboard of the application where users can
 start and end focus sessions, view aggregated focus metrics, and review optimal focus
 conditions based on prior sessions.
@@ -338,7 +338,11 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        if (!prefs.getBoolean("completed", false)) {
+        if (!ConsentManager.hasConsent(requireContext())) {
+            sessionStatus.setText("Please accept EEG data consent before using EEG-based sessions.");
+            btnStartSession.setEnabled(false);
+            btnEndSession.setEnabled(false);
+        } else if (!prefs.getBoolean("completed", false)) {
             sessionStatus.setText("Please complete the intake survey to unlock session recording.");
             btnStartSession.setEnabled(false);
             btnEndSession.setEnabled(false);
@@ -374,6 +378,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void onBtConnectClicked() {
+        if (!ConsentManager.hasConsent(requireContext())) {
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flFragment, new ConsentFragment())
+                    .addToBackStack(null)
+                    .commit();
+            return;
+        }
+
         getParentFragmentManager()
                 .beginTransaction()
                 .replace(R.id.flFragment, new DeviceScanFragment())

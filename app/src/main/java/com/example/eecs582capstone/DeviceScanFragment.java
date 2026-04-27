@@ -4,7 +4,7 @@ package com.example.eecs582capstone;
 Filename: DeviceScanFragment.java
 Author(s): Riley England
 Created: 04-12-2026
-Last Modified: 04-19-2026
+Last Modified: 04-26-2026
 Overview and Purpose: Handles scanning for nearby EEG devices using the NeuroSDK,
 displaying discovered devices to the user, and allowing selection of a device to
 initiate the connection process.
@@ -171,6 +171,18 @@ public class DeviceScanFragment extends Fragment {
     }
 
     private void checkPermissionsAndScan() {
+        if (!ConsentManager.hasConsent(requireContext())) {
+            tvScanStatus.setText("EEG consent is required before scanning for devices.");
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.flFragment, new ConsentFragment())
+                    .addToBackStack(null)
+                    .commit();
+
+            return;
+        }
+
         if (hasRequiredPermissions()) {
             startScan();
         } else {

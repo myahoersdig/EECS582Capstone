@@ -77,6 +77,19 @@ Modern profile layout for the Profile Fragment
             android:backgroundTint="@color/purple_200"
             android:textColor="@android:color/white"/>
 
+        <!-- EEG Consent Buttons -->
+        <Button
+            android:id="@+id/btnReviewConsent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Review EEG Consent" />
+
+        <Button
+            android:id="@+id/btnRevokeConsent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Revoke EEG Consent" />
+
         <!-- Permission Settings Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/permissionSettingsCard"
