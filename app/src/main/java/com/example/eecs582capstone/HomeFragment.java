@@ -148,8 +148,17 @@ public class HomeFragment extends Fragment {
             long activeId = dbHelper.getActiveSessionId(currentUserId);
             if (activeId != -1) {
                 dbHelper.endSession(activeId);
-                Toast.makeText(getActivity(), "Session ended", Toast.LENGTH_SHORT).show();
+
+                boolean processed = processCompletedSession(activeId);
+
+                if (processed) {
+                    Toast.makeText(getActivity(), "Session ended and saved to Results.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getActivity(), "Session ended, but results were not processed.", Toast.LENGTH_SHORT).show();
+                }
+
                 updateSessionUI();
+                calculateAndDisplayAggregatedData();
             } else {
                 Toast.makeText(getActivity(), "No active session", Toast.LENGTH_SHORT).show();
             }
@@ -394,6 +403,89 @@ public class HomeFragment extends Fragment {
                 .commit();
     }
 
+    private boolean processCompletedSession(long sessionId) {
+        try {
+            java.io.InputStream is = requireContext().getAssets().open("demo_sessions.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+
+            String jsonString = new String(buffer, java.nio.charset.StandardCharsets.UTF_8);
+            org.json.JSONObject data = new org.json.JSONObject(jsonString);
+            org.json.JSONArray sessions = data.getJSONArray("sessions");
+
+            int processedCount = dbHelper.getProcessedSessionCount(currentUserId);
+            int sessionIndex = processedCount % sessions.length();
+
+            org.json.JSONObject session = sessions.getJSONObject(sessionIndex);
+            org.json.JSONArray samples = session.getJSONArray("samples");
+
+            double sumQ = 0;
+            int countQ = 0;
+            java.util.List<Double> validV = new java.util.ArrayList<>();
+
+            for (int j = 0; j < samples.length(); j++) {
+                org.json.JSONObject sample = samples.getJSONObject(j);
+
+                if (sample.has("q") && !sample.isNull("q")) {
+                    sumQ += sample.getDouble("q");
+                    countQ++;
+                }
+
+                if (sample.has("v") && !sample.isNull("v")) {
+                    validV.add(sample.getDouble("v"));
+                }
+            }
+
+            double avgQ = countQ > 0 ? sumQ / countQ : 0.0;
+            double completionRate = (double) validV.size() / samples.length();
+
+            int qualityScore = (int) Math.round(avgQ * completionRate * 9) + 1;
+            int varianceScore = mapVarianceTo1to10(calculateVariance(validV));
+
+            String label = "Reading " + (processedCount + 1);
+
+            return dbHelper.saveProcessedResultsToExistingSession(
+                    sessionId,
+                    label,
+                    varianceScore,
+                    qualityScore
+            );
+
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Processing error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    private int mapVarianceTo1to10(double variance) {
+        double maxVariance = 0.01;
+        double minVariance = 0.0001;
+
+        if (variance <= minVariance) return 10;
+        if (variance >= maxVariance) return 1;
+
+        return (int) Math.round((1.0 - (variance - minVariance) / (maxVariance - minVariance)) * 9) + 1;
+    }
+
+    private double calculateVariance(java.util.List<Double> values) {
+        if (values.size() < 2) return 0.0;
+
+        double sum = 0;
+        for (double v : values) {
+            sum += v;
+        }
+
+        double mean = sum / values.size();
+
+        double temp = 0;
+        for (double v : values) {
+            temp += (v - mean) * (v - mean);
+        }
+
+        return temp / (values.size() - 1);
+    }
 
     @Override
     public void onResume() {
