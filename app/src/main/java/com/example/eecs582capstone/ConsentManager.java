@@ -3,7 +3,7 @@ Filename: ConsentManager.java
 Author(s): Riley England
 Created: 04-25-2026
 Last Modified: 04-26-2026
-Overview and Purpose: Stores consent value from user.
+Overview and Purpose: Sets & Stores consent value from user.
 Notes: n/a
 */
 

@@ -1,3 +1,13 @@
+/*
+Filename: ConsentFragment.java
+Author(s): Riley England
+Created: 04-25-2026
+Last Modified: 04-26-2026
+Overview and Purpose: Creates a new fragment that appears when
+attempting to connect to the EEG. Works with fragment_consent.xml.
+Notes: n/a
+*/
+
 package com.example.eecs582capstone;
 
 import android.os.Bundle;
