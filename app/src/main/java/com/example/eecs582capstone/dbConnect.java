@@ -37,7 +37,7 @@ public class dbConnect extends SQLiteOpenHelper {
     //Temp: needs to be translated into a cloud database for authentication.
 
     private static final String DB_NAME = "appName";
-    private static final int DB_VERSION = 5;   // Incremented to trigger onUpgrade
+    private static final int DB_VERSION = 6;
 
     // Users table
     private static final String TABLE_USERS = "users";
@@ -178,7 +178,7 @@ public class dbConnect extends SQLiteOpenHelper {
         if (oldVersion < 5) {
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_NOTES, "TEXT");
         }
-        // Future upgrades can be chained here
+        // Version 6: no schema changes (auth moved to Supabase)
     }
 
     // Helper used during upgrades so the app can safely add new columns
