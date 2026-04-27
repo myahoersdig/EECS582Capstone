@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+Filename: item_onboarding.xml
+Author(s): Abdelrahman Zeidan
+Created: 04-25-2026
+Last Modified: 04-26-2026
+Overview and Purpose: Layout for a single onboarding page (image + text)
+Notes:
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
