@@ -403,6 +403,8 @@ public class HomeFragment extends Fragment {
                 .commit();
     }
 
+    // helper functions for session results
+
     private boolean processCompletedSession(long sessionId) {
         try {
             java.io.InputStream is = requireContext().getAssets().open("demo_sessions.json");
