@@ -47,6 +47,7 @@ import androidx.fragment.app.Fragment;
 import java.util.Locale;
 
 import com.example.eecs582capstone.eeg.BrainBitConnectionStore;
+import com.example.eecs582capstone.eeg.BrainBitRecorder;
 
 /*
 HomeFragment class: A primary UI controller that manages session lifecycle (start/end),
@@ -62,6 +63,8 @@ public class HomeFragment extends Fragment {
     private Button btnStartSession, btnEndSession;
     private dbConnect dbHelper;
     private int currentUserId = -1;
+
+    private BrainBitRecorder activeRecorder;
 
     // Bluetooth mock state
     private TextView tvBtStatus, tvBtStatusDot;
@@ -149,7 +152,16 @@ public class HomeFragment extends Fragment {
             if (activeId != -1) {
                 dbHelper.endSession(activeId);
 
-                boolean processed = processCompletedSession(activeId);
+                BrainBitRecorder finishedRecorder = activeRecorder;
+                if (finishedRecorder != null) {
+                    finishedRecorder.stop();
+                    if (BrainBitConnectionStore.hasManager()) {
+                        BrainBitConnectionStore.getManager().setRecorder(null);
+                    }
+                    activeRecorder = null;
+                }
+
+                boolean processed = processCompletedSession(activeId, finishedRecorder);
 
                 if (processed) {
                     Toast.makeText(getActivity(), "Session ended and saved to Results.", Toast.LENGTH_SHORT).show();
@@ -322,7 +334,18 @@ public class HomeFragment extends Fragment {
                     );
 
                     if (sessionId != -1) {
-                        Toast.makeText(getActivity(), "Session started!", Toast.LENGTH_SHORT).show();
+                        if (BrainBitConnectionStore.hasManager()) {
+                            BrainBitRecorder recorder = new BrainBitRecorder();
+                            if (recorder.start(requireContext(), sessionId)) {
+                                activeRecorder = recorder;
+                                BrainBitConnectionStore.getManager().setRecorder(recorder);
+                                Toast.makeText(getActivity(), "Session started! EEG recording active.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getActivity(), "Session started. EEG recording unavailable.", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(getActivity(), "Session started!", Toast.LENGTH_SHORT).show();
+                        }
                         updateSessionUI();
                     } else {
                         Toast.makeText(getActivity(), "Failed to start session", Toast.LENGTH_SHORT).show();
@@ -405,7 +428,16 @@ public class HomeFragment extends Fragment {
 
     // helper functions for session results
 
-    private boolean processCompletedSession(long sessionId) {
+    private boolean processCompletedSession(long sessionId, BrainBitRecorder recorder) {
+        if (recorder != null && recorder.hasData()) {
+            int varianceScore = recorder.computeVarianceScore();
+            int qualityScore = recorder.computeQualityScore();
+            int processedCount = dbHelper.getProcessedSessionCount(currentUserId);
+            String label = "Reading " + (processedCount + 1);
+            return dbHelper.saveProcessedResultsToExistingSession(sessionId, label, varianceScore, qualityScore);
+        }
+
+        // No real recording — fall back to demo data
         try {
             java.io.InputStream is = requireContext().getAssets().open("demo_sessions.json");
             int size = is.available();

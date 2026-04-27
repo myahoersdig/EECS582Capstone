@@ -67,8 +67,13 @@ public class BrainBitManager {
     private BrainBit2 sensor;
 
     private volatile ConnectionState connectionState = ConnectionState.DISCONNECTED;
+    private volatile BrainBitRecorder recorder;
 
     private String connectedDeviceName = "device";
+
+    public void setRecorder(BrainBitRecorder recorder) {
+        this.recorder = recorder;
+    }
 
 
 
@@ -77,6 +82,7 @@ public class BrainBitManager {
         public void onSignalDataReceived(SignalChannelsData[] data) {
             mainHandler.post(() -> {
                 if (listener != null) listener.onSignalDataReceived(data);
+                if (recorder != null) recorder.onSignalData(data);
             });
         }
     };
