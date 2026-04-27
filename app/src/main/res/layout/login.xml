@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 Filename: login.xml
-Author(s): Abdelrahman Zeidan
+Author(s): Abdelrahman Zeidan, Mya Hoersdig
 Created: Feb 24
-Last Modified:
+Last Modified: April 26th
 Overview and Purpose: XML layout file for the login screen. Provides email and password input fields along with login and registration buttons.
 Notes:
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -16,61 +17,102 @@ Notes:
         android:id="@+id/namelogo"
         android:layout_width="400dp"
         android:layout_height="wrap_content"
-        android:src="@drawable/attuneappname"
-        android:scaleType="centerInside"
         android:adjustViewBounds="true"
-        app:layout_constraintTop_toTopOf="parent"
+        android:scaleType="centerInside"
+        android:src="@drawable/attuneappname"
         app:layout_constraintBottom_toTopOf="@+id/editEmailAddressLog"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.3"/>
-
-    <EditText
-        android:id="@+id/editEmailAddressLog"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="Email Address"
-        android:inputType="textEmailAddress"
-        android:minHeight="48dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.454"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="100dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"/>
-
-    <EditText
-        android:id="@+id/edtPasswordLog"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:minHeight="48dp"
-        app:layout_constraintEnd_toEndOf="@id/editEmailAddressLog"
-        app:layout_constraintStart_toStartOf="@id/editEmailAddressLog"
-        app:layout_constraintTop_toBottomOf="@id/editEmailAddressLog"
-        android:layout_marginTop="16dp"/>
+        app:layout_constraintVertical_bias="0.393" />
 
     <Button
         android:id="@+id/btnLoginLog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:text="Login"
         app:layout_constraintEnd_toEndOf="@id/edtPasswordLog"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="@id/edtPasswordLog"
-        app:layout_constraintTop_toBottomOf="@id/edtPasswordLog"
-        android:layout_marginTop="24dp"/>
+        app:layout_constraintTop_toBottomOf="@id/edtPasswordLog" />
+
+    <EditText
+        android:id="@+id/editEmailAddressLog"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="356dp"
+        android:layout_marginEnd="32dp"
+        android:ems="10"
+        android:hint="Email Address"
+        android:inputType="textEmailAddress"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edtPasswordLog"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:ems="10"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="@id/editEmailAddressLog"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@id/editEmailAddressLog"
+        app:layout_constraintTop_toBottomOf="@id/editEmailAddressLog" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:gravity="center"
+        android:text="Have you struggled with studying for an exam? Unable to concentrate in a coffee shop or at the library? We can help! Let us help you Attune to your surroundings and discover your best focus spots together!"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/namelogo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="52dp"
+        android:text="Login Here:"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView2" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Or Register:"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/btnLoginLog"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/btnRegisterLog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
         android:text="Register"
         app:layout_constraintEnd_toEndOf="@id/btnLoginLog"
+        app:layout_constraintHorizontal_bias="0.47"
         app:layout_constraintStart_toStartOf="@id/btnLoginLog"
-        app:layout_constraintTop_toBottomOf="@id/btnLoginLog"
-        android:layout_marginTop="16dp"/>
+        app:layout_constraintTop_toBottomOf="@id/btnLoginLog" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
