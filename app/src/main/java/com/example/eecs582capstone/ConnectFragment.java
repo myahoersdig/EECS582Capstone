@@ -60,7 +60,14 @@ public class ConnectFragment extends Fragment {
     public ConnectFragment() {}
 
     private boolean allElectrodesReady = false;
-
+    private static final double IDLE_SIGNAL_BASELINE = 0.400000015894572;
+    private static final double YELLOW_DEVIATION_THRESHOLD = 0.015;
+    private static final double GREEN_DEVIATION_THRESHOLD = 0.030;
+    private int stableO1 = 0;
+    private int stableO2 = 0;
+    private int stableT3 = 0;
+    private int stableT4 = 0;
+    private static final int REQUIRED_STABLE_READINGS = 3;
     private enum ElectrodeStatus {
         RED, YELLOW, GREEN
     }
@@ -124,7 +131,7 @@ public class ConnectFragment extends Fragment {
 
                     case CONNECTED:
                         tvConnectStatus.setText("Connected to " + selectedDeviceName);
-                        android.util.Log.d("ConnectFragment", "Starting signal");
+                        android.util.Log.d("ConnectFragment", "Connected. Starting EEG signal for electrode quality detection.");
                         brainBitManager.startSignal();
                         break;
 
@@ -176,17 +183,26 @@ public class ConnectFragment extends Fragment {
                 double avgT3 = sumAbsT3 / count;
                 double avgT4 = sumAbsT4 / count;
 
+                double devO1 = Math.abs(avgO1 - IDLE_SIGNAL_BASELINE);
+                double devO2 = Math.abs(avgO2 - IDLE_SIGNAL_BASELINE);
+                double devT3 = Math.abs(avgT3 - IDLE_SIGNAL_BASELINE);
+                double devT4 = Math.abs(avgT4 - IDLE_SIGNAL_BASELINE);
+
                 android.util.Log.d("ConnectFragment",
                         "signal avg abs: O1=" + avgO1 +
                                 " O2=" + avgO2 +
                                 " T3=" + avgT3 +
-                                " T4=" + avgT4);
+                                " T4=" + avgT4 +
+                                " | deviation: O1=" + devO1 +
+                                " O2=" + devO2 +
+                                " T3=" + devT3 +
+                                " T4=" + devT4);
 
                 updateElectrodeIndicators(
-                        signalToStatus(avgO1),
-                        signalToStatus(avgO2),
-                        signalToStatus(avgT3),
-                        signalToStatus(avgT4)
+                        signalToStatusFromDeviation(devO1),
+                        signalToStatusFromDeviation(devO2),
+                        signalToStatusFromDeviation(devT3),
+                        signalToStatusFromDeviation(devT4)
                 );
             }
 
@@ -213,16 +229,20 @@ public class ConnectFragment extends Fragment {
         return root;
     }
 
-    private ElectrodeStatus signalToStatus(double avgAbsVolts) {
-        // Translate the Avg Abs Volts to the appropriate Electrode status
-        if (Double.isNaN(avgAbsVolts) || Double.isInfinite(avgAbsVolts)) {
+    private ElectrodeStatus signalToStatusFromDeviation(double deviationFromIdle) {
+        // The BrainBit signal appears to idle around 0.4000000159 when electrodes are not placed.
+        // Electrode quality is estimated by how far each channel moves away from that idle value.
+
+        if (Double.isNaN(deviationFromIdle) || Double.isInfinite(deviationFromIdle)) {
             return ElectrodeStatus.RED;
-        } else if (avgAbsVolts < 1e-7) {
-            return ElectrodeStatus.RED;
-        } else if (avgAbsVolts < 5e-7) {
+        }
+
+        if (deviationFromIdle >= GREEN_DEVIATION_THRESHOLD) {
+            return ElectrodeStatus.GREEN;
+        } else if (deviationFromIdle >= YELLOW_DEVIATION_THRESHOLD) {
             return ElectrodeStatus.YELLOW;
         } else {
-            return ElectrodeStatus.GREEN;
+            return ElectrodeStatus.RED;
         }
     }
 

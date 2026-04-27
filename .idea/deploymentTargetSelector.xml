@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-03-04T16:10:01.893321Z">
+        <DropdownSelection timestamp="2026-04-27T01:49:28.626686100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/abdozeidan/.android/avd/ZeidanPiePlay.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R92W40SRSHA" />
             </handle>
           </Target>
         </DropdownSelection>
