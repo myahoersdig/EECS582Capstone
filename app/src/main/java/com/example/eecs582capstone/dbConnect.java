@@ -203,6 +203,20 @@ public class dbConnect extends SQLiteOpenHelper {
         db.close();
     }
 
+    // Creates a local user record if one doesn't already exist for this email.
+    // Called after successful Supabase auth to ensure sessions FK is satisfied.
+    public void ensureLocalUser(String email, String firstName, String lastName) {
+        if (getUserByEmail(email) != null) return;
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_FIRSTNAME, firstName);
+        values.put(COL_LASTNAME, lastName);
+        values.put(COL_EMAIL, email);
+        values.put(COL_PASSWORD, "");
+        db.insert(TABLE_USERS, null, values);
+        db.close();
+    }
+
     public boolean checkUser(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_USERS +

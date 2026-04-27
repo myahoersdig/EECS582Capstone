@@ -46,7 +46,6 @@ public class Entry extends Activity {
                 startActivity(i);
             }
         });
-        // NEW: Login button click
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,40 +56,42 @@ public class Entry extends Activity {
                     Toast.makeText(Entry.this, "Please enter email and password", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                //connect to authentication DB
-                dbConnect dbHelper = new dbConnect(Entry.this);
-                //checks validity of login
-                boolean valid = dbHelper.checkUser(email, password);
 
-                if (valid) {
-                    Toast.makeText(Entry.this, "Login successful", Toast.LENGTH_SHORT).show();
-                    //creates shared preferences for the user session
-                    SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("email", email); // this email will be used to query db in Profile
-                    editor.putBoolean("logged_in", true);
-                    editor.apply();
+                btnLogin.setEnabled(false);
+                btnRegisterLog.setEnabled(false);
 
-                    SharedPreferences onboardingPrefs = getSharedPreferences(OnboardingActivity.PREFS_NAME, MODE_PRIVATE);
-                    boolean hasSeenOnboarding = onboardingPrefs.getBoolean(
-                            OnboardingActivity.getOnboardingKey(email),
-                            false
-                    );
+                SupabaseAuthClient.signIn(email, password, new SupabaseAuthClient.AuthCallback() {
+                    @Override
+                    public void onSuccess(String email, String firstName, String lastName) {
+                        dbConnect dbHelper = new dbConnect(Entry.this);
+                        dbHelper.ensureLocalUser(email, firstName, lastName);
 
-                    Intent intent;
-                    if (hasSeenOnboarding) {
-                        intent = new Intent(Entry.this, MainActivity.class);
-                    } else {
-                        intent = new Intent(Entry.this, OnboardingActivity.class);
-                        intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+                        SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
+                        prefs.edit()
+                                .putString("email", email)
+                                .putBoolean("logged_in", true)
+                                .apply();
+
+                        SharedPreferences onboardingPrefs = getSharedPreferences(OnboardingActivity.PREFS_NAME, MODE_PRIVATE);
+                        boolean hasSeenOnboarding = onboardingPrefs.getBoolean(
+                                OnboardingActivity.getOnboardingKey(email), false);
+
+                        Intent intent = hasSeenOnboarding
+                                ? new Intent(Entry.this, MainActivity.class)
+                                : new Intent(Entry.this, OnboardingActivity.class)
+                                        .putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+
+                        startActivity(intent);
+                        finish();
                     }
 
-                    startActivity(intent); //Start onboarding or main activity
-                    finish();
-                } else {
-                    //Wrong email/password
-                    Toast.makeText(Entry.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
-                }
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(Entry.this, message, Toast.LENGTH_LONG).show();
+                        btnLogin.setEnabled(true);
+                        btnRegisterLog.setEnabled(true);
+                    }
+                });
             }
         });
 
