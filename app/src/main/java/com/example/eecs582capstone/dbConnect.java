@@ -37,7 +37,7 @@ public class dbConnect extends SQLiteOpenHelper {
     //Temp: needs to be translated into a cloud database for authentication.
 
     private static final String DB_NAME = "appName";
-    private static final int DB_VERSION = 5;   // Incremented to trigger onUpgrade
+    private static final int DB_VERSION = 7;
 
     // Users table
     private static final String TABLE_USERS = "users";
@@ -178,7 +178,45 @@ public class dbConnect extends SQLiteOpenHelper {
         if (oldVersion < 5) {
             addColumnIfNeeded(db, TABLE_SESSIONS, COL_NOTES, "TEXT");
         }
-        // Future upgrades can be chained here
+        // Version 7: ensure users table exists (may be missing on devices with corrupt v6 DB)
+        if (oldVersion < 7) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_USERS + " ("
+                    + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_FIRSTNAME + " TEXT, "
+                    + COL_LASTNAME + " TEXT, "
+                    + COL_EMAIL + " TEXT, "
+                    + COL_PASSWORD + " TEXT)");
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_SESSIONS + " ("
+                    + COL_SESSION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_USER_ID + " INTEGER, "
+                    + COL_START_TIME + " INTEGER, "
+                    + COL_END_TIME + " INTEGER, "
+                    + COL_LABEL + " TEXT, "
+                    + COL_VARIANCE_SCORE + " INTEGER, "
+                    + COL_QUALITY_SCORE + " INTEGER, "
+                    + COL_SLEEP + " TEXT, "
+                    + COL_MEAL + " TEXT, "
+                    + COL_CAFFEINE + " TEXT, "
+                    + COL_MOOD + " TEXT, "
+                    + COL_STRESS + " INTEGER, "
+                    + COL_LOCATION + " TEXT, "
+                    + COL_LIGHT + " INTEGER, "
+                    + COL_NOISE + " INTEGER, "
+                    + COL_FAMILIARITY + " INTEGER, "
+                    + COL_GENRE + " TEXT, "
+                    + COL_LYRICS + " TEXT, "
+                    + COL_TEMPO + " INTEGER, "
+                    + COL_Q1 + " TEXT, "
+                    + COL_Q2 + " TEXT, "
+                    + COL_Q3 + " TEXT, "
+                    + COL_Q4 + " TEXT, "
+                    + COL_Q5 + " TEXT, "
+                    + COL_Q6 + " TEXT, "
+                    + COL_Q7 + " TEXT, "
+                    + COL_Q8 + " TEXT, "
+                    + COL_NOTES + " TEXT, "
+                    + "FOREIGN KEY(" + COL_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_ID + "))");
+        }
     }
 
     // Helper used during upgrades so the app can safely add new columns
@@ -199,6 +237,20 @@ public class dbConnect extends SQLiteOpenHelper {
         values.put(COL_LASTNAME, user.getLastname());
         values.put(COL_EMAIL, user.getEmailAddress());
         values.put(COL_PASSWORD, user.getPassword());
+        db.insert(TABLE_USERS, null, values);
+        db.close();
+    }
+
+    // Creates a local user record if one doesn't already exist for this email.
+    // Called after successful Supabase auth to ensure sessions FK is satisfied.
+    public void ensureLocalUser(String email, String firstName, String lastName) {
+        if (getUserByEmail(email) != null) return;
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_FIRSTNAME, firstName);
+        values.put(COL_LASTNAME, lastName);
+        values.put(COL_EMAIL, email);
+        values.put(COL_PASSWORD, "");
         db.insert(TABLE_USERS, null, values);
         db.close();
     }

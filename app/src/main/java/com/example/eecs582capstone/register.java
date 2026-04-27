@@ -62,36 +62,44 @@ public class register extends AppCompatActivity {
                 String password = edtPasswordReg.getText().toString().trim();
                 String confirmPassword = edtConfirmPasswordReg.getText().toString().trim();
 
-                // Check for empty fields
                 if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                     Toast.makeText(register.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // Check if passwords match
                 if (!password.equals(confirmPassword)) {
                     Toast.makeText(register.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                     edtConfirmPasswordReg.setText("");
                     return;
                 }
 
-                // Save to database
-                dbConnect dbHelper = new dbConnect(register.this);
-                Users newUser = new Users(0, firstName, lastName, email, password); // id is auto-generated
-                dbHelper.addUser(newUser);
+                btnRegister.setEnabled(false);
 
-                SharedPreferences prefs = getSharedPreferences("user_session", MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("email", email);
-                editor.putBoolean("logged_in", true);
-                editor.apply();
+                SupabaseAuthClient.signUp(email, password, firstName, lastName, new SupabaseAuthClient.AuthCallback() {
+                    @Override
+                    public void onSuccess(String email, String firstName, String lastName) {
+                        dbConnect dbHelper = new dbConnect(register.this);
+                        dbHelper.ensureLocalUser(email, firstName, lastName);
 
-                Toast.makeText(register.this, "Registration successful", Toast.LENGTH_SHORT).show();
+                        getSharedPreferences("user_session", MODE_PRIVATE).edit()
+                                .putString("email", email)
+                                .putBoolean("logged_in", true)
+                                .apply();
 
-                Intent intent = new Intent(register.this, OnboardingActivity.class);
-                intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
-                startActivity(intent);
-                finish(); // Move to onboarding screen
+                        Toast.makeText(register.this, "Registration successful", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(register.this, OnboardingActivity.class);
+                        intent.putExtra(OnboardingActivity.EXTRA_USER_EMAIL, email);
+                        startActivity(intent);
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(register.this, message, Toast.LENGTH_LONG).show();
+                        btnRegister.setEnabled(true);
+                    }
+                });
             }
         });
     }
